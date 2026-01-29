@@ -1,39 +1,44 @@
+import streamlit as st
 import yt_dlp
 import os
 
-def baixar_video(url):
-    # Cria a pasta de downloads se não existir
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
+# Interface do Usuário
+st.set_page_config(page_title="Downloader do Tácito", page_icon="📲")
+st.title("📲 Downloader de Vídeos")
 
-    ydl_opts = {
-        # 'best' baixa um arquivo único já pronto em mp4, evitando erro de FFmpeg
-        'format': 'best[ext=mp4]/best',
-        'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'noplaylist': True,
+url = st.text_input("Cole o link do Instagram, YouTube ou Twitter aqui:")
+
+if st.button("Preparar Download"):
+    if not url:
+        st.warning("Por favor, insira um link.")
+    else:
+        # Nome fixo para o arquivo temporário no servidor
+        output_name = "video_baixado.mp4"
         
-        # --- ESSENCIAL PARA STORIES ---
-        # O arquivo 'cookies.txt' deve estar na pasta C:\Users\tacito.tinoco\Documents\BaixarVideos
-        'cookiefile': 'cookies.txt', 
-        
-        # Opções de estabilidade
-        'hls_prefer_native': True,
-        'retries': 10,
-        'fragment_retries': 10,
-        'nocheckcertificate': True,
-    }
+        ydl_opts = {
+            'format': 'best[ext=mp4]/best',
+            'outtmpl': output_name,
+            'cookiefile': 'cookies.txt', # Usa seu arquivo de cookies atual
+            'nocheckcertificate': True,
+        }
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            print(f"\n--- Iniciando download de: {url} ---")
-            ydl.download([url])
-            print("\n✅ Sucesso! O arquivo está na pasta 'downloads'.")
-    except Exception as e:
-        print(f"\n❌ Erro: {e}")
-        print("\nDICA: Para Stories, certifique-se de que o 'cookies.txt' foi gerado com você logado no Instagram.")
-
-if __name__ == "__main__":
-    print("=== Downloader Pro (YouTube, Instagram, Twitter) ===")
-    link = input("Cole o link aqui: ").strip()
-    if link:
-        baixar_video(link)
+        try:
+            with st.spinner('Processando... isso pode levar alguns segundos.'):
+                # Remove arquivo anterior se existir para não dar conflito
+                if os.path.exists(output_name):
+                    os.remove(output_name)
+                
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+                
+                # Disponibiliza o arquivo para o navegador
+                with open(output_name, "rb") as file:
+                    st.success("Pronto!")
+                    st.download_button(
+                        label="Clique aqui para Salvar no Celular",
+                        data=file,
+                        file_name="video.mp4",
+                        mime="video/mp4"
+                    )
+        except Exception as e:
+            st.error(f"Erro: {e}")
