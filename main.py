@@ -22,37 +22,33 @@ if st.button("Preparar Download"):
                     with open(cookie_file, "w") as f:
                         f.write(st.secrets["general"]["COOKIES_DATA"])
                 else:
-                    # Fallback para teste local (certifique-se de que o cookies.txt está na pasta)
                     cookie_file = "cookies.txt" if os.path.exists("cookies.txt") else None
 
-                # 2. Configurações otimizadas para evitar o Erro 403 e "Format not available"
+                # 2. Configurações para burlar bloqueios e resolver Formato no Servidor
                 ydl_opts = {
-                    # '18' é o formato MP4 que já vem com áudio e vídeo juntos (360p/640p)
-                    # Essencial para rodar em servidores sem FFmpeg como o Streamlit
+                    # '18' é o código para o formato MP4 360p/640p que já vem com áudio e vídeo juntos.
+                    # Isso evita a necessidade de FFmpeg no servidor do Streamlit.
                     'format': '18/best[ext=mp4]', 
                     'outtmpl': output_name,
                     'cookiefile': cookie_file,
                     'nocheckcertificate': True,
-                    # User-agent atualizado para simular Chrome recente no Windows
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                     'referer': 'https://www.google.com/',
                     'quiet': True,
                     'no_warnings': True,
                 }
 
-                # Limpeza de resíduos de downloads anteriores
                 if os.path.exists(output_name):
                     os.remove(output_name)
                 
-                # Execução do download usando o motor yt-dlp
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
                 
-                # 3. Entrega do arquivo para o navegador
+                # 3. Entrega do arquivo
                 if os.path.exists(output_name):
                     with open(output_name, "rb") as file:
                         st.success("✅ Vídeo pronto!")
-                        st.video(output_name) # Preview para conferência
+                        st.video(output_name) 
                         
                         st.download_button(
                             label="⬇️ Baixar para o Dispositivo",
@@ -61,12 +57,7 @@ if st.button("Preparar Download"):
                             mime="video/mp4"
                         )
                 else:
-                    st.error("Erro: O formato solicitado não está disponível ou o servidor bloqueou o acesso.")
+                    st.error("Erro: O formato solicitado não está disponível no servidor.")
 
         except Exception as e:
             st.error(f"Erro: {e}")
-            if "403" in str(e):
-                st.info("💡 Dica: O YouTube bloqueou o IP. Tente atualizar seu conteúdo de cookies nos Secrets.")
-
-st.markdown("---")
-st.caption("Personal Downloader - v1.2")
