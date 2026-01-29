@@ -27,19 +27,17 @@ if st.button("Preparar Download"):
 
                 # 2. Configurações otimizadas para evitar o Erro 403 e "Format not available"
                 ydl_opts = {
-                    # Pede o melhor MP4 único (vídeo+áudio juntos) para evitar processamento FFmpeg
-                    'format': 'best[ext=mp4]/best',
-                    'outtmpl': output_name,
-                    'cookiefile': cookie_file,
-                    'nocheckcertificate': True,
-                    # Disfarce de Navegador atualizado para burlar bloqueios de servidor
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                    'referer': 'https://www.google.com/',
-                    'quiet': True,
-                    'no_warnings': True,
-                    # Retentativas em caso de instabilidade na rede do servidor
-                    'retries': 3,
-                }
+    # '18' é o código para o formato MP4 360p/640p que é aceito universalmente
+    # 'best' garante que se o 18 não existir, ele pega a próxima melhor opção única
+    'format': '18/best', 
+    'outtmpl': output_name,
+    'cookiefile': cookie_file,
+    'nocheckcertificate': True,
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'referer': 'https://www.google.com/',
+    'quiet': True,
+    'no_warnings': True,
+}
 
                 # Limpeza de resíduos de downloads anteriores
                 if os.path.exists(output_name):
