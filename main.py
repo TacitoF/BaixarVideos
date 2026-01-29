@@ -3,7 +3,7 @@ import yt_dlp
 import os
 
 st.set_page_config(page_title="Downloader do Tácito", page_icon="📲")
-st.title("📲 Downloader Pro")
+st.title("Downloader Pro")
 
 url = st.text_input("Cole o link aqui:")
 
@@ -30,6 +30,8 @@ if st.button("Preparar Download"):
                     'outtmpl': output_name,
                     'cookiefile': cookie_file,
                     'nocheckcertificate': True,
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'referer': 'https://www.google.com/',
                 }
 
                 if os.path.exists(output_name):
@@ -42,7 +44,7 @@ if st.button("Preparar Download"):
                     st.success("Vídeo pronto!")
                     st.video(output_name) # Preview
                     st.download_button(
-                        label="⬇️ Baixar para o Dispositivo",
+                        label="Baixar para o Dispositivo",
                         data=file,
                         file_name="video_tácito.mp4",
                         mime="video/mp4"
