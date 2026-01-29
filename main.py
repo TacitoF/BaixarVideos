@@ -15,45 +15,46 @@ if st.button("Preparar Download"):
         cookie_file = "temp_cookies.txt"
 
         try:
-            with st.spinner('Processando...'):
-                # 1. Gerenciamento de Cookies
+            with st.spinner('Processando... Isso pode levar um pouco.'):
+                # 1. Carrega Cookies dos Secrets
                 if "general" in st.secrets:
                     with open(cookie_file, "w") as f:
                         f.write(st.secrets["general"]["COOKIES_DATA"])
                 else:
                     cookie_file = "cookies.txt" if os.path.exists("cookies.txt") else None
 
-                # 2. Configurações para Servidores sem FFmpeg (O pulo do gato)
+                # 2. Configurações para evitar arquivos vazios e erro de formato
                 ydl_opts = {
-                    # Busca o melhor MP4 único que já vem com áudio e vídeo juntos
+                    # Tenta baixar o melhor formato MP4 que já venha com áudio
                     'format': 'best[ext=mp4]/best',
                     'outtmpl': output_name,
                     'cookiefile': cookie_file,
                     'nocheckcertificate': True,
-                    # Disfarce de Navegador Humano
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                    'noplaylist': True, # Garante que não tente baixar uma lista inteira
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                     'referer': 'https://www.google.com/',
                 }
 
+                # Limpeza de segurança
                 if os.path.exists(output_name):
                     os.remove(output_name)
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
                 
-                # 3. Verificação e Entrega
+                # 3. Verificação Robusta de Conteúdo
                 if os.path.exists(output_name) and os.path.getsize(output_name) > 0:
                     with open(output_name, "rb") as file:
                         st.success("✅ Vídeo pronto!")
-                        st.video(output_name)
+                        st.video(output_name) 
                         st.download_button(
-                            label="⬇️ Baixar para o Celular",
+                            label="⬇️ Salvar no Celular",
                             data=file,
                             file_name="video_tácito.mp4",
                             mime="video/mp4"
                         )
                 else:
-                    st.error("Erro: O arquivo gerado está vazio. Tente outro link ou atualize os cookies.")
+                    st.error("Erro: O servidor baixou um arquivo sem conteúdo. Tente atualizar seus cookies do YouTube.")
 
         except Exception as e:
             st.error(f"Erro: {e}")
