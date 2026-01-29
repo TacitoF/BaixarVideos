@@ -4,7 +4,7 @@ import os
 
 # Configurações de Interface
 st.set_page_config(page_title="Downloader do Tácito", page_icon="📲")
-st.title("📲 Downloader Pro")
+st.title("Downloader Pro")
 
 url = st.text_input("Cole o link aqui:", placeholder="https://...")
 
