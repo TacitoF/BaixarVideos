@@ -16,28 +16,25 @@ if st.button("Preparar Download"):
 
         try:
             with st.spinner('Processando... Isso pode demorar para vídeos longos.'):
-                # 1. Carrega os Cookies do Secret
+                # 1. Carrega Cookies do Secrets ou Local
                 if "general" in st.secrets:
                     with open(cookie_file, "w") as f:
                         f.write(st.secrets["general"]["COOKIES_DATA"])
                 else:
                     cookie_file = "cookies.txt" if os.path.exists("cookies.txt") else None
 
-                # 2. Configurações para burlar o erro 403 e Formatos
+                # 2. Configurações para burlar bloqueios e gerenciar formatos
                 ydl_opts = {
-                    # Busca o melhor formato de vídeo + áudio que já venha em mp4 
-                    # para evitar a necessidade de processamento pesado (FFmpeg) no servidor
-                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    # Estratégia de fallback: tenta o melhor mp4 disponível
+                    'format': 'best[ext=mp4]/best',
                     'outtmpl': output_name,
                     'cookiefile': cookie_file,
                     'nocheckcertificate': True,
-                    'ignoreerrors': False,
-                    'logtostderr': False,
-                    'quiet': True,
-                    'no_warnings': True,
-                    # Identidade Visual para o YouTube não desconfiar
+                    # Disfarce de Navegador Atualizado
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
                     'referer': 'https://www.google.com/',
+                    'quiet': True,
+                    'no_warnings': True,
                 }
 
                 if os.path.exists(output_name):
@@ -57,7 +54,7 @@ if st.button("Preparar Download"):
                             mime="video/mp4"
                         )
                 else:
-                    st.error("Erro: O formato solicitado não está disponível ou foi bloqueado.")
+                    st.error("O YouTube bloqueou este formato. Tente outro vídeo ou atualize os cookies.")
 
         except Exception as e:
-            st.error(f"Ocorreu um erro: {e}")
+            st.error(f"Erro: {e}")
