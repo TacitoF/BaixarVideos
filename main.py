@@ -5,35 +5,34 @@ import os
 st.set_page_config(page_title="Downloader Universal", page_icon="📲")
 st.title("📲 Downloader Universal")
 
-# 1. Caminhos e Cookies na pasta temporária do servidor
 tmp_dir = "/tmp"
 cookie_file = os.path.join(tmp_dir, "master_cookies.txt")
 output_path = os.path.join(tmp_dir, "video_final.mp4")
 
+# Escreve os cookies sempre que o app inicia
 if "general" in st.secrets:
     with open(cookie_file, "w", encoding="utf-8") as f:
         f.write(st.secrets["general"]["COOKIES_DATA"])
 
-url = st.text_input("Cole o link aqui:", placeholder="YouTube ou Instagram")
+url = st.text_input("Cole o link aqui:", placeholder="Ex: https://www.youtube.com/watch?v=...")
 
 if st.button("Preparar Download"):
     if not url:
-        st.warning("Insira um link.")
+        st.warning("Insira um link primeiro.")
     else:
         try:
             if os.path.exists(output_path): os.remove(output_path)
             
             with st.spinner('Baixando na nuvem...'):
                 ydl_opts = {
-                    # '18' é o MP4 360p (funciona sem erro 403 na maioria dos casos)
-                    # 'best' tentará a melhor qualidade se a rede permitir
-                    'format': '18/best[ext=mp4]/best',
+                    'format': 'best',
                     'outtmpl': output_path,
                     'cookiefile': cookie_file,
                     'nocheckcertificate': True,
-                    'rm_cachedir': True, # Limpa o cache para evitar o erro de arquivo vazio
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                    'socket_timeout': 150,
+                    # Reduz a carga no servidor para evitar bloqueios
+                    'noprogress': True,
+                    'quiet': True,
                 }
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -45,7 +44,7 @@ if st.button("Preparar Download"):
                     with open(output_path, "rb") as file:
                         st.download_button("⬇️ Salvar no Celular", file, "video.mp4", "video/mp4")
                 else:
-                    st.error("O YouTube cortou a conexão. Aguarde 30 segundos e tente novamente.")
+                    st.error("Erro 403: O YouTube bloqueou estes cookies. Por favor, gere novos cookies e atualize o Secrets.")
 
         except Exception as e:
-            st.error(f"Erro detectado: {e}")
+            st.error(f"Erro: {e}")
