@@ -17,37 +17,38 @@ if st.button("Preparar Download"):
 
         try:
             with st.spinner('Processando... Isso pode demorar para vídeos longos.'):
-                # 1. Gerenciamento de Cookies via Secrets (Fundamental para nuvem)
+                # 1. Gerenciamento de Cookies via Secrets
                 if "general" in st.secrets:
                     with open(cookie_file, "w") as f:
                         f.write(st.secrets["general"]["COOKIES_DATA"])
                 else:
-                    # Fallback para teste local
+                    # Fallback para teste local (certifique-se de que o cookies.txt está na pasta)
                     cookie_file = "cookies.txt" if os.path.exists("cookies.txt") else None
 
                 # 2. Configurações otimizadas para evitar o Erro 403 e "Format not available"
                 ydl_opts = {
-    # '18' é o código para o formato MP4 360p/640p que é aceito universalmente
-    # 'best' garante que se o 18 não existir, ele pega a próxima melhor opção única
-    'format': '18/best', 
-    'outtmpl': output_name,
-    'cookiefile': cookie_file,
-    'nocheckcertificate': True,
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'referer': 'https://www.google.com/',
-    'quiet': True,
-    'no_warnings': True,
-}
+                    # '18' é o formato MP4 que já vem com áudio e vídeo juntos (360p/640p)
+                    # Essencial para rodar em servidores sem FFmpeg como o Streamlit
+                    'format': '18/best[ext=mp4]', 
+                    'outtmpl': output_name,
+                    'cookiefile': cookie_file,
+                    'nocheckcertificate': True,
+                    # User-agent atualizado para simular Chrome recente no Windows
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'referer': 'https://www.google.com/',
+                    'quiet': True,
+                    'no_warnings': True,
+                }
 
                 # Limpeza de resíduos de downloads anteriores
                 if os.path.exists(output_name):
                     os.remove(output_name)
                 
-                # Execução do download
+                # Execução do download usando o motor yt-dlp
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
                 
-                # 3. Entrega do arquivo
+                # 3. Entrega do arquivo para o navegador
                 if os.path.exists(output_name):
                     with open(output_name, "rb") as file:
                         st.success("✅ Vídeo pronto!")
@@ -68,4 +69,4 @@ if st.button("Preparar Download"):
                 st.info("💡 Dica: O YouTube bloqueou o IP. Tente atualizar seu conteúdo de cookies nos Secrets.")
 
 st.markdown("---")
-st.caption("Personal Downloader - v1.1")
+st.caption("Personal Downloader - v1.2")
