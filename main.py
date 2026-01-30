@@ -5,13 +5,13 @@ import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Downloader Pro",
+    page_title="Downloader Universal",
     page_icon="⚫",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS MODERNO E CORRIGIDO (CONTRASTE ALTO) ---
+# --- CSS MODERNO (VISUAL DARK & ALTO CONTRASTE) ---
 st.markdown("""
     <style>
     /* 1. Fundo Geral */
@@ -25,7 +25,7 @@ st.markdown("""
         color: #e0e0e0 !important;
     }
     
-    /* 3. Inputs de Texto (Correção do Placeholder) */
+    /* 3. Inputs de Texto */
     .stTextInput > div > div > input {
         background-color: #1c1c1c !important;
         color: #ffffff !important;
@@ -33,16 +33,15 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 12px !important;
     }
-    /* Cor do texto de dica (placeholder) */
     .stTextInput > div > div > input::placeholder {
-        color: #888888 !important; /* Cinza claro visível */
+        color: #888888 !important;
         opacity: 1;
     }
     .stTextInput > div > div > input:focus {
         border-color: #555555 !important;
     }
 
-    /* 4. Input Numérico (Story Selector) */
+    /* 4. Input Numérico */
     .stNumberInput > div > div > input {
         background-color: #1c1c1c !important;
         color: white !important;
@@ -55,10 +54,10 @@ st.markdown("""
         color: #e0e0e0 !important;
     }
 
-    /* 5. Botão Principal (CORREÇÃO DE TEXTO APAGADO) */
+    /* 5. Botão Principal */
     .stButton > button {
         width: 100%;
-        background-color: #e0e0e0 !important; /* Fundo Claro */
+        background-color: #e0e0e0 !important;
         border: none !important;
         border-radius: 12px !important;
         padding: 0.75rem !important;
@@ -66,24 +65,16 @@ st.markdown("""
         margin-top: 10px !important;
         transition: all 0.3s ease !important;
     }
-    
-    /* Força a cor do texto DENTRO do botão para PRETO */
-    .stButton > button, 
-    .stButton > button p, 
-    .stButton > button div {
-        color: #000000 !important; 
+    .stButton > button, .stButton > button p {
+        color: #000000 !important;
     }
-
     .stButton > button:hover {
         background-color: #ffffff !important;
         transform: scale(1.01);
         box-shadow: 0 4px 12px rgba(255,255,255,0.1);
     }
-    .stButton > button:active {
-        background-color: #cccccc !important;
-    }
 
-    /* 6. Esconder elementos padrão */
+    /* 6. Remove elementos padrão */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -92,7 +83,12 @@ st.markdown("""
 
 # --- CABEÇALHO ---
 st.title("⚫ Downloader Pro")
-st.markdown("Cole seu link abaixo. A interface se adapta automaticamente.", help="Suporta Instagram e YouTube.")
+st.markdown(
+    """
+    Suporte total para: **Instagram, TikTok, Facebook, X (Twitter), Pinterest**, entre outros.
+    \n⚠️ *Este site não suporta downloads do YouTube.*
+    """
+)
 
 # --- GERENCIAMENTO DE COOKIES ---
 tmp_dir = "/tmp"
@@ -103,25 +99,30 @@ if "general" in st.secrets:
 
 # --- LÓGICA DE INTERFACE ---
 with st.container():
-    # Placeholder agora configurado via CSS
-    url = st.text_input("Link da Mídia", placeholder="Cole o link do Instagram ou YouTube aqui...", label_visibility="collapsed")
+    url = st.text_input("Link da Mídia", placeholder="Cole o link do Instagram, TikTok ou Facebook...", label_visibility="collapsed")
 
     is_story = False
     story_index = 1
     
+    # Detecção de Stories do Instagram
     if url and "instagram.com/stories/" in url:
         is_story = True
         st.markdown("---")
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.info("📸 **Link de Story detectado!**")
+            st.info("📸 **Story do Instagram detectado!**")
         with col2:
             story_index = st.number_input("Qual baixar?", min_value=1, value=1, step=1)
 
-    # --- BOTÃO ---
+    # --- BOTÃO DE AÇÃO ---
     if st.button("BAIXAR MÍDIA"):
         if not url:
             st.toast("⚠️ Por favor, cole um link primeiro.")
+        
+        # BLOQUEIO DE YOUTUBE
+        elif "youtube.com" in url or "youtu.be" in url:
+            st.error("🚫 Downloads do YouTube não são permitidos nesta plataforma.")
+            
         else:
             output_path = os.path.join(tmp_dir, f"media_final_{int(time.time())}.mp4")
             if os.path.exists(output_path): os.remove(output_path)
@@ -130,7 +131,7 @@ with st.container():
             progress_bar = st.progress(0)
             
             try:
-                status_text.markdown("🔄 **Iniciando conexão segura...**")
+                status_text.markdown("🔄 **Iniciando conexão...**")
                 progress_bar.progress(20)
                 
                 ydl_opts = {
@@ -140,7 +141,6 @@ with st.container():
                     'nocheckcertificate': True,
                     'quiet': True,
                     'no_warnings': True,
-                    # User Agent Mobile do iPhone (Melhor para Instagram)
                     'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
                 }
 
@@ -148,7 +148,7 @@ with st.container():
                     ydl_opts['playlist_items'] = str(story_index)
                     status_text.markdown(f"🔄 **Baixando Story nº {story_index}...**")
                 else:
-                    status_text.markdown("🔄 **Processando vídeo...**")
+                    status_text.markdown("🔄 **Processando mídia...**")
 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
@@ -157,7 +157,7 @@ with st.container():
 
                 if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                     progress_bar.progress(100)
-                    status_text.success("✅ **Download Concluído!**")
+                    status_text.success("✅ **Sucesso!**")
                     time.sleep(0.5)
                     progress_bar.empty()
                     
@@ -167,11 +167,11 @@ with st.container():
                         st.download_button(
                             label="SALVAR NA GALERIA",
                             data=f,
-                            file_name=f"story_{story_index}.mp4" if is_story else "video_download.mp4",
+                            file_name=f"media_download.mp4",
                             mime="video/mp4"
                         )
                 else:
-                    status_text.error("❌ Erro: Arquivo vazio. Verifique se o story ainda está disponível.")
+                    status_text.error("❌ Erro: Arquivo vazio ou mídia não encontrada.")
                     progress_bar.empty()
 
             except Exception as e:
