@@ -3,7 +3,7 @@ import yt_dlp
 import os
 import time
 import re
-import requests # <--- NOVO IMPORT NECESSÁRIO
+import requests
 from datetime import datetime
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- FUNÇÃO LOG DISCORD (NOVA) ---
+# --- FUNÇÃO LOG DISCORD (AJUSTADA) ---
 def send_discord_log(error_msg, video_url):
     # Verifica se o segredo existe antes de tentar enviar
     if "general" in st.secrets and "DISCORD_WEBHOOK" in st.secrets["general"]:
@@ -24,15 +24,26 @@ def send_discord_log(error_msg, video_url):
 
     clean_msg = str(error_msg)[:800] # Limita o tamanho da mensagem
     
+    # --- LÓGICA DE COR E TÍTULO ---
+    # Verifica se a URL ou a Origem contém palavras-chave de feedback
+    is_feedback = "FEEDBACK" in video_url or "REPORT" in video_url
+    
+    title = "📢 Novo Feedback" if is_feedback else "🚨 Falha no Download"
+    
+    # Cores Decimais:
+    # 3447003  = Azul (#3498DB) -> Feedback
+    # 15548997 = Vermelho (#ED4245) -> Erro
+    color = 3447003 if is_feedback else 15548997
+
     data = {
         "username": "NexusDL Monitor",
         "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png", # Ícone de alerta
         "embeds": [{
-            "title": "🚨 Falha no Download",
-            "color": 15548997, # Vermelho
+            "title": title,
+            "color": color, 
             "fields": [
-                {"name": "URL Alvo", "value": video_url, "inline": False},
-                {"name": "Erro Técnico", "value": f"```{clean_msg}```", "inline": False},
+                {"name": "Origem/URL", "value": video_url, "inline": False},
+                {"name": "Detalhes", "value": f"```{clean_msg}```", "inline": False},
                 {"name": "Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
             ]
         }]
@@ -61,7 +72,7 @@ def clean_error_message(error_text):
         
     return f"Erro técnico: {text[:200]}..."
 
-# --- CSS REFINADO (MANTIDO) ---
+# --- CSS REFINADO (MANTIDO EXATAMENTE COMO ENVIADO) ---
 st.markdown("""
     <style>
     /* 1. BACKGROUND MONOCROMÁTICO E TECNOLÓGICO */
@@ -537,7 +548,6 @@ with st.container():
                     'nocheckcertificate': True,
                     'quiet': True,
                     'no_warnings': True,
-                    # User-Agent de Desktop para simular navegador comum (melhor para IPs de datacenter)
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 }
                 
@@ -581,10 +591,30 @@ with st.container():
                 st.download_button("BAIXAR ARQUIVO", f, f"NexusDL_{timestamp}.mp4", "video/mp4")
         st.toast("✅ Pronto!", icon=None)
     
-    # --- RODAPÉ DE SUPORTE (NOVO) ---
+    # --- RODAPÉ DE SUPORTE (ATUALIZADO) ---
     st.markdown("---")
+    
+    # Expander com título atualizado
+    with st.expander("🏳️ Feedback & Suporte"):
+        with st.form("report_form"):
+            email_contato = st.text_input("Seu E-mail (Opcional)", placeholder="Para a gente te responder caso precise")
+            descricao_erro = st.text_area("O que aconteceu?", placeholder="Ex: O link do Reels tal não baixou e a tela ficou branca...")
+            
+            enviar_report = st.form_submit_button("Enviar")
+            
+            if enviar_report and descricao_erro:
+                # Prepara a mensagem para o Discord
+                msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
+                
+                # Passa "FEEDBACK MANUAL" como origem para acionar a cor AZUL
+                send_discord_log(msg_final, "📩 FEEDBACK MANUAL")
+                
+                st.success("Obrigado! Sua mensagem foi enviada para nossa equipe.")
+            elif enviar_report:
+                st.warning("Por favor, descreva o erro antes de enviar.")
+
     st.markdown("""
     <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
-        Precisa de ajuda? <a href="mailto:seu_email@exemplo.com?subject=Suporte%20NexusDL" style="color: rgba(255,255,255,0.6); text-decoration: none;">Reportar problema</a>
+        NexusDL © 2026
     </div>
     """, unsafe_allow_html=True)
