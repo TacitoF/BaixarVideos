@@ -617,4 +617,4 @@ with st.container():
     <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
         NexusDL © 2026
     </div>
-    """, unsafe_allow_html=True).
+    """, unsafe_allow_html=True)
