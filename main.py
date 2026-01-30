@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- FUNÇÃO LOG DISCORD (AJUSTADA) ---
+# --- FUNÇÃO LOG DISCORD ---
 def send_discord_log(error_msg, video_url):
     # Verifica se o segredo existe antes de tentar enviar
     if "general" in st.secrets and "DISCORD_WEBHOOK" in st.secrets["general"]:
@@ -60,7 +60,10 @@ def clean_error_message(error_text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     text = ansi_escape.sub('', text)
     
-    # Mensagens personalizadas
+    # --- TRADUÇÕES ---
+    if "not a valid URL" in text or "Unsupported URL" in text:
+        return "⚠️ Link inválido. Certifique-se de copiar a URL completa (http/https)."
+        
     if "HTTP Error 400" in text:
         return "⚠️ Conexão recusada (Erro 400). O Instagram bloqueou a conexão anônima ou os cookies expiraram."
     if "Sign in to confirm" in text or "login" in text.lower():
@@ -72,7 +75,7 @@ def clean_error_message(error_text):
         
     return f"Erro técnico: {text[:200]}..."
 
-# --- CSS REFINADO (MANTIDO EXATAMENTE COMO ENVIADO) ---
+# --- CSS (COM A REGRA PARA OCULTAR O 'PRESS ENTER') ---
 st.markdown("""
     <style>
     /* 1. BACKGROUND MONOCROMÁTICO E TECNOLÓGICO */
@@ -401,6 +404,11 @@ st.markdown("""
     /* 11. OCULTAR ELEMENTOS */
     #MainMenu, footer, header, .stDeployButton { visibility: hidden !important; display: none !important; }
     
+    /* --> NOVO: OCULTA O 'PRESS ENTER TO APPLY' <-- */
+    [data-testid="InputInstructions"] {
+        display: none !important;
+    }
+    
     /* 12. SCROLLBAR */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 4px; }
@@ -448,22 +456,19 @@ st.markdown("""
 st.title("NexusDL")
 st.markdown("Insta • TikTok • X (Twitter)", help="Cole o link abaixo.")
 
-# --- GERENCIAMENTO DE COOKIES (HÍBRIDO: LOCAL E NUVEM) ---
+# --- GERENCIAMENTO DE COOKIES ---
 tmp_dir = "/tmp"
 if not os.path.exists(tmp_dir): os.makedirs(tmp_dir)
 
-# 1. Tenta usar arquivo local primeiro (Melhor para localhost)
 if os.path.exists("cookies.txt"):
     cookie_file = "cookies.txt"
-# 2. Se não, tenta usar os Secrets (Para nuvem)
 elif "general" in st.secrets:
     cookie_file = os.path.join(tmp_dir, "cookies.txt")
     with open(cookie_file, "w", encoding="utf-8") as f: 
-        # Verifica se a chave existe antes de escrever
         if "COOKIES_DATA" in st.secrets["general"]:
             f.write(st.secrets["general"]["COOKIES_DATA"])
 else:
-    cookie_file = None # Sem cookies
+    cookie_file = None
 
 # --- FUNÇÃO AUXILIAR ---
 def get_stories_count(url, c_file):
@@ -483,15 +488,12 @@ if 'last_url' not in st.session_state: st.session_state.last_url = ""
 
 # --- INTERFACE ---
 with st.container():
-    # 1. INPUT
     url = st.text_input("Link", placeholder="Cole o link da mídia aqui...", label_visibility="collapsed", key="url_input")
     
-    # 2. BOTÃO CENTRALIZADO
     b_col1, b_col2, b_col3 = st.columns([5, 4, 5])
     with b_col2:
         check_click = st.button("VERIFICAR LINK", help="Clique para processar")
 
-    # Reset se URL mudar
     if url != st.session_state.last_url:
         for k in ['current_video_path', 'download_success', 'story_count_cache', 'story_processed']:
             if k in st.session_state: del st.session_state[k]
@@ -502,14 +504,11 @@ with st.container():
     if url:
         is_story = "instagram.com/stories/" in url
         
-        # --- LÓGICA STORIES ---
         if is_story:
-            # Ao clicar, conta os stories
             if check_click and 'story_count_cache' not in st.session_state:
                 with st.spinner("Conectando ao Nexus..."):
                     st.session_state['story_count_cache'] = get_stories_count(url, cookie_file)
             
-            # Se já tem contagem, mostra seletor
             if 'story_count_cache' in st.session_state:
                 max_stories = st.session_state['story_count_cache']
                 if max_stories > 0:
@@ -518,7 +517,6 @@ with st.container():
                     with s_col2:
                         story_index = st.number_input("Nº", 1, max_stories, 1, label_visibility="collapsed")
                     
-                    # Botão Específico para Story
                     act_col1, act_col2, act_col3 = st.columns([5, 4, 5])
                     with act_col2:
                         if st.button(f"BAIXAR STORY {story_index}"):
@@ -526,12 +524,10 @@ with st.container():
                 else:
                     st.error("Stories indisponíveis (Login necessário).")
         
-        # --- LÓGICA VÍDEO NORMAL (AUTOMÁTICO) ---
         elif check_click:
             download_now = True
             story_index = 0
 
-        # --- EXECUÇÃO DO DOWNLOAD (UNIFICADA) ---
         if download_now:
             output_path = os.path.join(tmp_dir, f"download_{int(time.time())}.mp4")
             if os.path.exists(output_path): os.remove(output_path)
@@ -541,7 +537,6 @@ with st.container():
                 status.markdown("Extraindo mídia...")
                 prog.progress(20)
                 
-                # --- CONFIGURAÇÃO CORRIGIDA & ATUALIZADA ---
                 ydl_opts = {
                     'format': 'best',
                     'outtmpl': output_path,
@@ -551,11 +546,9 @@ with st.container():
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 }
                 
-                # APLICA COOKIES SEMPRE (Reels, Posts e Stories)
                 if cookie_file:
                     ydl_opts['cookiefile'] = cookie_file
 
-                # Configuração extra apenas se for Story
                 if is_story:
                     ydl_opts['playlist_items'] = str(story_index)
                 
@@ -568,18 +561,13 @@ with st.container():
                     status.empty(); time.sleep(0.2); prog.empty(); st.rerun()
                 else:
                     status.error("Falha no download. O arquivo não foi gerado."); prog.empty()
-                    # Log de falha silenciosa para o Discord (arquivo vazio)
                     send_discord_log("Arquivo final tem 0 bytes ou não existe", url)
 
             except Exception as e:
-                # 1. Envia log para o Discord
                 send_discord_log(e, url)
-                
-                # 2. Exibe erro limpo para o usuário
                 status.error(clean_error_message(e))
                 prog.empty()
 
-    # --- RESULTADO ---
     if st.session_state.get('download_success'):
         path = st.session_state['current_video_path']
         st.video(path)
@@ -591,25 +579,20 @@ with st.container():
                 st.download_button("BAIXAR ARQUIVO", f, f"NexusDL_{timestamp}.mp4", "video/mp4")
         st.toast("✅ Pronto!", icon=None)
     
-    # --- RODAPÉ DE SUPORTE (NOVA LÓGICA MINIMALISTA) ---
     st.markdown("---")
     
-    # Inicializa estado se não existir
+    # --- RODAPÉ TOGGLE ---
     if 'feedback_open' not in st.session_state:
         st.session_state.feedback_open = False
 
     def toggle_feedback():
         st.session_state.feedback_open = not st.session_state.feedback_open
 
-    # Layout centralizado para o "botão de texto"
     col_f1, col_f2, col_f3 = st.columns([1, 2, 1])
     with col_f2:
-        # Texto discreto acima (se quiser) ou apenas o botão
-        # Botão que funciona como toggle
         label_btn = "❌ Fechar Suporte" if st.session_state.feedback_open else "🏳️ Relatar Problema"
         st.button(label_btn, on_click=toggle_feedback, use_container_width=True)
 
-    # Renderização condicional do formulário (Sem a borda do Expander)
     if st.session_state.feedback_open:
         with st.container():
             with st.form("report_form"):
@@ -623,9 +606,6 @@ with st.container():
                     msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
                     send_discord_log(msg_final, "📩 FEEDBACK MANUAL")
                     st.success("Enviado com sucesso!")
-                    # Opcional: Fechar após enviar
-                    # st.session_state.feedback_open = False
-                    # st.rerun()
                 elif enviar_report:
                     st.warning("Por favor, descreva o erro.")
 
