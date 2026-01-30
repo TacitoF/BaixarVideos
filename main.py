@@ -119,7 +119,7 @@ def clean_error_message(error_text):
     text = re.sub(r'\[0m', '', text)
     
     if "not a valid URL" in text or "Unsupported URL" in text:
-        return "⚠️ Link inválido. Certifique-se de copiar a URL completa (http/https)."
+        return "⚠️ Link inválido. Certifique-se de copiar a URL completa."
         
     if "HTTP Error 400" in text:
         return "⚠️ Conexão recusada (Erro 400). O Instagram bloqueou a conexão anônima ou os cookies expiraram."
@@ -350,6 +350,7 @@ with st.container():
 
     st.markdown("""
     <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
-        NexusDL © 2026
+        NexusDL © 2026<br>
+        Desenvolvido por Tácito
     </div>
     """, unsafe_allow_html=True)
