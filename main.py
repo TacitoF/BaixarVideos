@@ -591,27 +591,43 @@ with st.container():
                 st.download_button("BAIXAR ARQUIVO", f, f"NexusDL_{timestamp}.mp4", "video/mp4")
         st.toast("✅ Pronto!", icon=None)
     
-    # --- RODAPÉ DE SUPORTE (ATUALIZADO) ---
+    # --- RODAPÉ DE SUPORTE (NOVA LÓGICA MINIMALISTA) ---
     st.markdown("---")
     
-    # Expander com título atualizado
-    with st.expander("🏳️ Feedback & Suporte"):
-        with st.form("report_form"):
-            email_contato = st.text_input("Seu E-mail (Opcional)", placeholder="Para a gente te responder caso precise")
-            descricao_erro = st.text_area("O que aconteceu?", placeholder="Ex: O link do Reels tal não baixou e a tela ficou branca...")
-            
-            enviar_report = st.form_submit_button("Enviar")
-            
-            if enviar_report and descricao_erro:
-                # Prepara a mensagem para o Discord
-                msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
+    # Inicializa estado se não existir
+    if 'feedback_open' not in st.session_state:
+        st.session_state.feedback_open = False
+
+    def toggle_feedback():
+        st.session_state.feedback_open = not st.session_state.feedback_open
+
+    # Layout centralizado para o "botão de texto"
+    col_f1, col_f2, col_f3 = st.columns([1, 2, 1])
+    with col_f2:
+        # Texto discreto acima (se quiser) ou apenas o botão
+        # Botão que funciona como toggle
+        label_btn = "❌ Fechar Suporte" if st.session_state.feedback_open else "🏳️ Relatar Problema"
+        st.button(label_btn, on_click=toggle_feedback, use_container_width=True)
+
+    # Renderização condicional do formulário (Sem a borda do Expander)
+    if st.session_state.feedback_open:
+        with st.container():
+            with st.form("report_form"):
+                st.caption("Descreva o problema encontrado.")
+                email_contato = st.text_input("Seu E-mail (Opcional)", placeholder="Contato...")
+                descricao_erro = st.text_area("Detalhes do erro", placeholder="Ex: O vídeo baixou sem áudio...", height=100)
                 
-                # Passa "FEEDBACK MANUAL" como origem para acionar a cor AZUL
-                send_discord_log(msg_final, "📩 FEEDBACK MANUAL")
+                enviar_report = st.form_submit_button("Enviar Reporte")
                 
-                st.success("Obrigado! Sua mensagem foi enviada para nossa equipe.")
-            elif enviar_report:
-                st.warning("Por favor, descreva o erro antes de enviar.")
+                if enviar_report and descricao_erro:
+                    msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
+                    send_discord_log(msg_final, "📩 FEEDBACK MANUAL")
+                    st.success("Enviado com sucesso!")
+                    # Opcional: Fechar após enviar
+                    # st.session_state.feedback_open = False
+                    # st.rerun()
+                elif enviar_report:
+                    st.warning("Por favor, descreva o erro.")
 
     st.markdown("""
     <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
