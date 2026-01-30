@@ -63,11 +63,11 @@ st.markdown("""
 # --- FUNÇÕES AUXILIARES ---
 
 def get_stories_count(url, cookie_file):
-    """Verifica quantos stories existem no link sem baixar o vídeo."""
+    """Verifica quantos stories existem no link sem baixar."""
     try:
         ydl_opts = {
             'quiet': True,
-            'extract_flat': True, # Apenas extrai metadados, muito rápido
+            'extract_flat': True,
             'cookiefile': cookie_file,
             'no_warnings': True,
             'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
@@ -75,24 +75,22 @@ def get_stories_count(url, cookie_file):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if 'entries' in info:
-                # Retorna a quantidade de itens na playlist (stories)
                 return len(list(info['entries']))
-            return 1 # Se não for playlist, assume que é 1
+            return 1
     except Exception:
         return 0
 
-def reset_interface():
-    """Limpa estados ao mudar o link."""
-    keys_to_reset = ['current_video_path', 'download_success', 'story_count_cache']
-    for key in keys_to_reset:
-        if key in st.session_state:
-            del st.session_state[key]
+def clean_state_on_change():
+    """Limpa vídeo e cache quando o usuário digita."""
+    keys = ['current_video_path', 'download_success', 'story_count_cache']
+    for k in keys:
+        if k in st.session_state:
+            del st.session_state[k]
 
 # --- APP START ---
 st.title("⚫ Downloader Pro")
 st.markdown("Suporte: **Instagram (Stories, Reels)**, TikTok, X.\n⚠️ *YouTube não suportado.*")
 
-# --- COOKIES ---
 tmp_dir = "/tmp"
 cookie_file = os.path.join(tmp_dir, "cookies.txt")
 
@@ -100,28 +98,39 @@ if "general" in st.secrets:
     with open(cookie_file, "w", encoding="utf-8") as f:
         f.write(st.secrets["general"]["COOKIES_DATA"])
 
+# --- LÓGICA DE DETECÇÃO DE MUDANÇA DE LINK ---
+# Se não existe 'last_url' na sessão, cria.
+if 'last_url' not in st.session_state:
+    st.session_state.last_url = ""
+
 # --- INTERFACE ---
 with st.container():
     url = st.text_input(
         "Link da Mídia", 
-        placeholder="Cole o link aqui...", 
+        placeholder="Cole o link aqui (Insta, X, TikTok)...", 
         label_visibility="collapsed",
-        on_change=reset_interface
+        on_change=clean_state_on_change # Limpa assim que dar Enter
     )
+
+    # DETECÇÃO DE MUDANÇA FORÇADA
+    # Se o URL atual for diferente do último salvo, limpa o cache de stories imediatamente
+    if url != st.session_state.last_url:
+        if 'story_count_cache' in st.session_state:
+            del st.session_state['story_count_cache']
+        st.session_state.last_url = url
 
     is_story = False
     story_index = 1
     max_stories = 1
     button_label = "BAIXAR MÍDIA"
 
-    # Lógica de Stories Inteligente
+    # 1. Lógica INSTAGRAM STORY
     if url and "instagram.com/stories/" in url:
         is_story = True
         st.markdown("---")
         
-        # Verifica a contagem (com cache para não rodar toda hora)
         if 'story_count_cache' not in st.session_state:
-            with st.spinner("🔍 Analisando quantos stories existem..."):
+            with st.spinner("🔍 Analisando stories..."):
                 count = get_stories_count(url, cookie_file)
                 st.session_state['story_count_cache'] = count
         
@@ -130,35 +139,37 @@ with st.container():
         if max_stories > 0:
             col1, col2 = st.columns([3, 1])
             with col1:
-                st.info(f"📸 **Story detectado!** Encontramos **{max_stories}** stories disponíveis.")
+                st.info(f"📸 **Story detectado!** {max_stories} disponíveis.")
             with col2:
-                # O input agora tem limite máximo baseado na contagem real
-                story_index = st.number_input(
-                    "Nº", 
-                    min_value=1, 
-                    max_value=max_stories, 
-                    value=1, 
-                    step=1, 
-                    label_visibility="collapsed"
-                )
+                story_index = st.number_input("Nº", min_value=1, max_value=max_stories, value=1, step=1, label_visibility="collapsed")
             button_label = f"BAIXAR STORY Nº {story_index}"
         else:
-            st.error("⚠️ Não foi possível ler os stories. Verifique se a conta é privada ou se os stories expiraram.")
+            st.error("⚠️ Não conseguimos ler os stories. Conta privada ou erro de login.")
+
+    # 2. Lógica TWITTER / X (Visual Feedback)
+    elif url and ("x.com" in url or "twitter.com" in url):
+        st.markdown("---")
+        st.info("🐦 **Link do X (Twitter) detectado!**")
+        button_label = "BAIXAR VÍDEO DO X"
+
+    # 3. Lógica TIKTOK
+    elif url and "tiktok.com" in url:
+        st.markdown("---")
+        st.info("🎵 **Link do TikTok detectado!**")
+        button_label = "BAIXAR TIKTOK"
 
     # Bloqueio YouTube
     if url and ("youtube.com" in url or "youtu.be" in url):
         st.error("🚫 Downloads do YouTube não são permitidos.")
-        reset_interface()
     else:
+        # Botão de Ação
         if st.button(button_label):
-            # Limpa vídeo anterior se houver
-            if 'current_video_path' in st.session_state:
-                 del st.session_state['current_video_path']
+            clean_state_on_change() # Garante limpeza antes do novo download
             
             if not url:
                 st.toast("⚠️ Cole um link primeiro.")
             elif is_story and max_stories == 0:
-                st.error("Erro: Nenhum story encontrado para baixar.")
+                st.error("Erro: Nenhum story acessível.")
             else:
                 output_path = os.path.join(tmp_dir, f"media_{int(time.time())}.mp4")
                 if os.path.exists(output_path): os.remove(output_path)
@@ -182,7 +193,7 @@ with st.container():
 
                     if is_story:
                         ydl_opts['playlist_items'] = str(story_index)
-                        status.markdown(f"🔄 **Baixando Story {story_index} de {max_stories}...**")
+                        status.markdown(f"🔄 **Baixando Story {story_index}...**")
                     else:
                         status.markdown("🔄 **Processando mídia...**")
 
@@ -199,14 +210,11 @@ with st.container():
                         prog.empty()
                         st.rerun()
                     else:
-                        status.error("❌ Erro: Arquivo vazio. O story pode ter expirado durante o processo.")
+                        status.error("❌ Erro: Arquivo vazio ou link inválido.")
                         prog.empty()
 
                 except Exception as e:
-                    if "403" in str(e):
-                        status.error("Erro 403: Acesso negado. Tente gerar novos cookies.")
-                    else:
-                        status.error(f"Erro: {e}")
+                    status.error(f"Erro: {e}")
                     prog.empty()
 
     # Exibição Persistente
