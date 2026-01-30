@@ -21,7 +21,7 @@ st.markdown("""
     }
     
     /* 2. Textos Gerais */
-    h1, h2, h3, p, label, .stMarkdown {
+    h1, h2, h3, p, label, .stMarkdown, .stInfo {
         color: #e0e0e0 !important;
     }
     
@@ -65,6 +65,7 @@ st.markdown("""
         margin-top: 10px !important;
         transition: all 0.3s ease !important;
     }
+    /* Força texto preto no botão */
     .stButton > button, .stButton > button p {
         color: #000000 !important;
     }
@@ -103,77 +104,83 @@ with st.container():
 
     is_story = False
     story_index = 1
-    
+    button_label = "BAIXAR MÍDIA" # Texto padrão do botão
+
     # Detecção de Stories do Instagram
     if url and "instagram.com/stories/" in url:
         is_story = True
         st.markdown("---")
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.info("📸 **Story do Instagram detectado!**")
+            st.info(f"📸 **Story detectado!** Selecione o número ao lado:")
         with col2:
-            story_index = st.number_input("Qual baixar?", min_value=1, value=1, step=1)
-
-    # --- BOTÃO DE AÇÃO ---
-    if st.button("BAIXAR MÍDIA"):
-        if not url:
-            st.toast("⚠️ Por favor, cole um link primeiro.")
+            # O input numérico atualiza o script, mudando o texto do botão abaixo
+            story_index = st.number_input("Nº", min_value=1, value=1, step=1, label_visibility="collapsed")
         
-        # BLOQUEIO DE YOUTUBE
-        elif "youtube.com" in url or "youtu.be" in url:
-            st.error("🚫 Downloads do YouTube não são permitidos nesta plataforma.")
-            
-        else:
-            output_path = os.path.join(tmp_dir, f"media_final_{int(time.time())}.mp4")
-            if os.path.exists(output_path): os.remove(output_path)
-            
-            status_text = st.empty()
-            progress_bar = st.progress(0)
-            
-            try:
-                status_text.markdown("🔄 **Iniciando conexão...**")
-                progress_bar.progress(20)
+        # O botão muda de texto para confirmar a seleção do usuário
+        button_label = f"BAIXAR STORY Nº {story_index}"
+
+    # Verificação de YouTube (Bloqueio Visual)
+    is_youtube = url and ("youtube.com" in url or "youtu.be" in url)
+
+    if is_youtube:
+        st.error("🚫 Downloads do YouTube não são permitidos. Tente outra plataforma.")
+    else:
+        # O botão só aparece se não for YouTube
+        if st.button(button_label):
+            if not url:
+                st.toast("⚠️ Por favor, cole um link primeiro.")
+            else:
+                output_path = os.path.join(tmp_dir, f"media_final_{int(time.time())}.mp4")
+                if os.path.exists(output_path): os.remove(output_path)
                 
-                ydl_opts = {
-                    'format': 'best',
-                    'outtmpl': output_path,
-                    'cookiefile': cookie_file,
-                    'nocheckcertificate': True,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                }
-
-                if is_story:
-                    ydl_opts['playlist_items'] = str(story_index)
-                    status_text.markdown(f"🔄 **Baixando Story nº {story_index}...**")
-                else:
-                    status_text.markdown("🔄 **Processando mídia...**")
-
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
+                status_text = st.empty()
+                progress_bar = st.progress(0)
                 
-                progress_bar.progress(80)
-
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                    progress_bar.progress(100)
-                    status_text.success("✅ **Sucesso!**")
-                    time.sleep(0.5)
-                    progress_bar.empty()
+                try:
+                    status_text.markdown("🔄 **Iniciando conexão...**")
+                    progress_bar.progress(20)
                     
-                    st.video(output_path)
-                    
-                    with open(output_path, "rb") as f:
-                        st.download_button(
-                            label="SALVAR NA GALERIA",
-                            data=f,
-                            file_name=f"media_download.mp4",
-                            mime="video/mp4"
-                        )
-                else:
-                    status_text.error("❌ Erro: Arquivo vazio ou mídia não encontrada.")
-                    progress_bar.empty()
+                    ydl_opts = {
+                        'format': 'best',
+                        'outtmpl': output_path,
+                        'cookiefile': cookie_file,
+                        'nocheckcertificate': True,
+                        'quiet': True,
+                        'no_warnings': True,
+                        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+                    }
 
-            except Exception as e:
-                status_text.error(f"Erro: {e}")
-                progress_bar.empty()
+                    if is_story:
+                        ydl_opts['playlist_items'] = str(story_index)
+                        status_text.markdown(f"🔄 **Baixando Story nº {story_index}...**")
+                    else:
+                        status_text.markdown("🔄 **Processando mídia...**")
+
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+                    
+                    progress_bar.progress(80)
+
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                        progress_bar.progress(100)
+                        status_text.success("✅ **Sucesso!**")
+                        time.sleep(0.5)
+                        progress_bar.empty()
+                        
+                        st.video(output_path)
+                        
+                        with open(output_path, "rb") as f:
+                            st.download_button(
+                                label="SALVAR NA GALERIA",
+                                data=f,
+                                file_name=f"media_download.mp4",
+                                mime="video/mp4"
+                            )
+                    else:
+                        status_text.error("❌ Erro: Arquivo vazio ou mídia não encontrada.")
+                        progress_bar.empty()
+
+                except Exception as e:
+                    status_text.error(f"Erro: {e}")
+                    progress_bar.empty()
