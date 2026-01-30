@@ -60,7 +60,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNÇÕES AUXILIARES ---
+# --- FUNÇÕES DE CONTROLE DE ESTADO ---
 
 def get_stories_count(url, cookie_file):
     """Verifica quantos stories existem no link sem baixar."""
@@ -80,12 +80,16 @@ def get_stories_count(url, cookie_file):
     except Exception:
         return 0
 
-def clean_state_on_change():
-    """Limpa vídeo e cache quando o usuário digita."""
+def on_url_change():
+    """Esta função roda IMEDIATAMENTE quando o usuário muda o texto."""
+    # 1. Limpa o cache de vídeo anterior
     keys = ['current_video_path', 'download_success', 'story_count_cache']
     for k in keys:
         if k in st.session_state:
             del st.session_state[k]
+    
+    # 2. Reseta variaveis de controle de stories
+    st.session_state['story_index'] = 1 
 
 # --- APP START ---
 st.title("⚫ Downloader Pro")
@@ -98,37 +102,28 @@ if "general" in st.secrets:
     with open(cookie_file, "w", encoding="utf-8") as f:
         f.write(st.secrets["general"]["COOKIES_DATA"])
 
-# --- LÓGICA DE DETECÇÃO DE MUDANÇA DE LINK ---
-# Se não existe 'last_url' na sessão, cria.
-if 'last_url' not in st.session_state:
-    st.session_state.last_url = ""
-
 # --- INTERFACE ---
 with st.container():
+    # O parametro key='url_input' conecta este input ao session_state automaticamente
     url = st.text_input(
         "Link da Mídia", 
         placeholder="Cole o link aqui (Insta, X, TikTok)...", 
         label_visibility="collapsed",
-        on_change=clean_state_on_change # Limpa assim que dar Enter
+        key="url_input", 
+        on_change=on_url_change 
     )
-
-    # DETECÇÃO DE MUDANÇA FORÇADA
-    # Se o URL atual for diferente do último salvo, limpa o cache de stories imediatamente
-    if url != st.session_state.last_url:
-        if 'story_count_cache' in st.session_state:
-            del st.session_state['story_count_cache']
-        st.session_state.last_url = url
 
     is_story = False
     story_index = 1
     max_stories = 1
     button_label = "BAIXAR MÍDIA"
 
-    # 1. Lógica INSTAGRAM STORY
+    # Lógica INSTAGRAM STORY
     if url and "instagram.com/stories/" in url:
         is_story = True
         st.markdown("---")
         
+        # Cache inteligente para não re-verificar a cada clique
         if 'story_count_cache' not in st.session_state:
             with st.spinner("🔍 Analisando stories..."):
                 count = get_stories_count(url, cookie_file)
@@ -141,18 +136,19 @@ with st.container():
             with col1:
                 st.info(f"📸 **Story detectado!** {max_stories} disponíveis.")
             with col2:
-                story_index = st.number_input("Nº", min_value=1, max_value=max_stories, value=1, step=1, label_visibility="collapsed")
+                # Usa key='story_index' para persistir o valor selecionado
+                story_index = st.number_input("Nº", min_value=1, max_value=max_stories, value=1, step=1, label_visibility="collapsed", key='story_input')
             button_label = f"BAIXAR STORY Nº {story_index}"
         else:
             st.error("⚠️ Não conseguimos ler os stories. Conta privada ou erro de login.")
 
-    # 2. Lógica TWITTER / X (Visual Feedback)
+    # Lógica TWITTER / X
     elif url and ("x.com" in url or "twitter.com" in url):
         st.markdown("---")
         st.info("🐦 **Link do X (Twitter) detectado!**")
         button_label = "BAIXAR VÍDEO DO X"
 
-    # 3. Lógica TIKTOK
+    # Lógica TIKTOK
     elif url and "tiktok.com" in url:
         st.markdown("---")
         st.info("🎵 **Link do TikTok detectado!**")
@@ -164,7 +160,9 @@ with st.container():
     else:
         # Botão de Ação
         if st.button(button_label):
-            clean_state_on_change() # Garante limpeza antes do novo download
+            # Limpa qualquer resquício visual antes de começar
+            if 'download_success' in st.session_state:
+                del st.session_state['download_success']
             
             if not url:
                 st.toast("⚠️ Cole um link primeiro.")
@@ -208,7 +206,7 @@ with st.container():
                         status.success("✅ **Sucesso!**")
                         time.sleep(0.5)
                         prog.empty()
-                        st.rerun()
+                        st.rerun() # FORÇA O RELOAD PARA EXIBIR O VÍDEO
                     else:
                         status.error("❌ Erro: Arquivo vazio ou link inválido.")
                         prog.empty()
