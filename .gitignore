@@ -1,2 +1,9 @@
+.streamlit/secrets.toml
+
 cookies.txt
-downloads/
+
+*.mp4 (
+
+__pycache__/
+
+.env
