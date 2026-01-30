@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS AVANÇADO (DESIGN SYSTEM "NEXUS") ---
+# --- CSS AVANÇADO (DESIGN SYSTEM "NEXUS" + CENTRALIZAÇÃO TOTAL) ---
 st.markdown("""
     <style>
     /* 1. BACKGROUND GRADIENTE PROFUNDO */
@@ -21,7 +21,23 @@ st.markdown("""
         font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     
-    /* 2. TIPOGRAFIA & CORES GERAIS */
+    /* 2. CENTRALIZAÇÃO FORÇADA (PC E MOBILE) */
+    /* Centraliza o bloco principal de conteúdo */
+    .block-container {
+        max-width: 700px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        text-align: center !important; /* Força alinhamento de texto */
+        margin: 0 auto;
+    }
+    
+    /* Centraliza Títulos e Textos */
+    h1, h2, h3, p, .stMarkdown, label {
+        text-align: center !important;
+        color: #e0e0e0 !important;
+    }
+    
+    /* Título com Gradiente */
     h1 {
         background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
         -webkit-background-clip: text;
@@ -29,37 +45,56 @@ st.markdown("""
         font-weight: 800 !important;
         letter-spacing: -1px !important;
     }
-    h2, p, label, .stMarkdown, div, span { color: #e0e0e0 !important; }
-    
+
     /* Remove links âncora */
     .st-emotion-cache-1629p8f a, a.anchor-link { display: none !important; }
 
     /* 3. INPUTS ESTILO "GLASS" (VIDRO ESCURO) */
+    .stTextInput > div {
+        display: flex;
+        justify-content: center;
+    }
+    .stTextInput > div > div {
+        width: 100%;
+    }
     .stTextInput > div > div > input {
-        background-color: rgba(255, 255, 255, 0.05) !important; /* Transparente */
+        background-color: rgba(255, 255, 255, 0.05) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 12px !important;
         padding: 15px !important;
+        text-align: center; /* Texto digitado no centro (opcional, remova se preferir esquerda) */
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
     }
-    /* Efeito de Foco no Input (Brilho sutil) */
     .stTextInput > div > div > input:focus {
         border-color: #666666 !important;
         box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
         background-color: rgba(255, 255, 255, 0.08) !important;
     }
     
-    /* Input Numérico e Botão Lupa */
+    /* Botões Pequenos (Lupa e +/-) */
     div[data-testid="column"] button, .stNumberInput input {
         background-color: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: #e0e0e0 !important;
         border-radius: 12px !important;
+        width: 100%; /* Garante largura total no mobile */
+    }
+    
+    /* Alinhamento Vertical das Colunas (Lupa e Input na mesma linha) */
+    div[data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* 4. BOTÃO DE AÇÃO (INTERATIVO) */
+    .stButton {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
     .stButton > button {
         width: 100%;
         background-color: #ffffff !important;
@@ -67,30 +102,28 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 0.9rem !important;
         margin-top: 10px !important;
-        
         color: #000000 !important;
         font-weight: 800 !important;
         text-transform: uppercase;
         font-size: 14px !important;
         letter-spacing: 1px;
-        
-        /* Transição Suave */
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     }
-    
-    /* Hover Effect (Cresce e brilha) */
     .stButton > button:hover {
         transform: scale(1.02) translateY(-2px);
         box-shadow: 0 10px 20px rgba(255, 255, 255, 0.15);
         background-color: #f0f0f0 !important;
     }
-    
     .stButton > button p { color: #000000 !important; }
 
     /* 5. BOTÃO DE DOWNLOAD FINAL (CYBER GREEN) */
+    [data-testid="stDownloadButton"] {
+        display: flex;
+        justify-content: center;
+    }
     [data-testid="stDownloadButton"] > button {
         width: 100% !important;
-        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important; /* Gradiente Neon */
+        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important;
         color: #000000 !important;
         border: none !important;
         font-weight: 900 !important;
@@ -105,7 +138,7 @@ st.markdown("""
     }
     [data-testid="stDownloadButton"] > button p { color: #000000 !important; }
 
-    /* 6. ANIMAÇÃO DE ENTRADA (FADE IN) */
+    /* 6. ANIMAÇÃO DE ENTRADA */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -157,6 +190,7 @@ if 'last_url' not in st.session_state:
 
 # --- INTERFACE ---
 with st.container():
+    # Ajuste de proporção para ficar melhor centralizado no mobile
     col_input, col_btn = st.columns([5, 1])
     
     with col_input:
