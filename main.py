@@ -82,6 +82,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- FUNÇÃO DE RESET (Limpa a tela ao mudar o link) ---
+def reset_interface():
+    """Apaga o vídeo e mensagens anteriores quando o link muda."""
+    if 'current_video_path' in st.session_state:
+        del st.session_state['current_video_path']
+    if 'download_success' in st.session_state:
+        del st.session_state['download_success']
+
 # --- CABEÇALHO ---
 st.title("⚫ Downloader Pro")
 st.markdown(
@@ -100,11 +108,17 @@ if "general" in st.secrets:
 
 # --- LÓGICA DE INTERFACE ---
 with st.container():
-    url = st.text_input("Link da Mídia", placeholder="Cole o link do Instagram, TikTok ou Facebook...", label_visibility="collapsed")
+    # O parametro on_change chama a função de reset assim que o texto muda
+    url = st.text_input(
+        "Link da Mídia", 
+        placeholder="Cole o link do Instagram, TikTok ou Facebook...", 
+        label_visibility="collapsed",
+        on_change=reset_interface
+    )
 
     is_story = False
     story_index = 1
-    button_label = "BAIXAR MÍDIA" # Texto padrão do botão
+    button_label = "BAIXAR MÍDIA"
 
     # Detecção de Stories do Instagram
     if url and "instagram.com/stories/" in url:
@@ -114,10 +128,8 @@ with st.container():
         with col1:
             st.info(f"📸 **Story detectado!** Selecione o número ao lado:")
         with col2:
-            # O input numérico atualiza o script, mudando o texto do botão abaixo
             story_index = st.number_input("Nº", min_value=1, value=1, step=1, label_visibility="collapsed")
         
-        # O botão muda de texto para confirmar a seleção do usuário
         button_label = f"BAIXAR STORY Nº {story_index}"
 
     # Verificação de YouTube (Bloqueio Visual)
@@ -125,9 +137,12 @@ with st.container():
 
     if is_youtube:
         st.error("🚫 Downloads do YouTube não são permitidos. Tente outra plataforma.")
+        reset_interface() # Garante que nada fique na tela se for youtube
     else:
-        # O botão só aparece se não for YouTube
+        # Seção do Botão e Processamento
         if st.button(button_label):
+            reset_interface() # Garante limpeza antes de começar um novo
+            
             if not url:
                 st.toast("⚠️ Por favor, cole um link primeiro.")
             else:
@@ -164,19 +179,18 @@ with st.container():
 
                     if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                         progress_bar.progress(100)
+                        
+                        # Salvando estado para persistir o vídeo
+                        st.session_state['current_video_path'] = output_path
+                        st.session_state['download_success'] = True
+                        
                         status_text.success("✅ **Sucesso!**")
                         time.sleep(0.5)
                         progress_bar.empty()
                         
-                        st.video(output_path)
+                        # Força rerun para exibir o vídeo usando o Session State
+                        st.rerun()
                         
-                        with open(output_path, "rb") as f:
-                            st.download_button(
-                                label="SALVAR NA GALERIA",
-                                data=f,
-                                file_name=f"media_download.mp4",
-                                mime="video/mp4"
-                            )
                     else:
                         status_text.error("❌ Erro: Arquivo vazio ou mídia não encontrada.")
                         progress_bar.empty()
@@ -184,3 +198,19 @@ with st.container():
                 except Exception as e:
                     status_text.error(f"Erro: {e}")
                     progress_bar.empty()
+
+    # --- ÁREA DE EXIBIÇÃO DE RESULTADO (PERSISTENTE) ---
+    # Só aparece se houver um download salvo na sessão E o link não tiver mudado
+    if 'download_success' in st.session_state and st.session_state['download_success']:
+        path = st.session_state['current_video_path']
+        
+        st.markdown("---")
+        st.video(path)
+        
+        with open(path, "rb") as f:
+            st.download_button(
+                label="SALVAR NA GALERIA",
+                data=f,
+                file_name=f"media_download.mp4",
+                mime="video/mp4"
+            )
