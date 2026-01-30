@@ -5,80 +5,113 @@ import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Downloader Pro",
+    page_title="NexusDL",
     page_icon="⚫",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS PROFISSIONAL (VISUAL DARK & CONTRASTE CORRIGIDO) ---
+# --- CSS AVANÇADO (DESIGN SYSTEM "NEXUS") ---
 st.markdown("""
     <style>
-    /* Fundo e Fonte Geral */
-    .stApp { background-color: #0e0e0e; font-family: 'Helvetica Neue', Arial, sans-serif; }
-    h1, h2, p, label, .stMarkdown, div, span { color: #e0e0e0 !important; }
-    
-    /* Inputs */
-    .stTextInput > div > div > input {
-        background-color: #1c1c1c !important;
-        color: #ffffff !important;
-        border: 1px solid #333333 !important;
-        border-radius: 8px !important;
-        padding: 12px !important;
+    /* 1. BACKGROUND GRADIENTE PROFUNDO */
+    .stApp {
+        background: radial-gradient(circle at 50% -20%, #2b2b2b 0%, #000000 80%);
+        background-attachment: fixed;
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     
-    /* Botão Lupa e Inputs Numéricos */
+    /* 2. TIPOGRAFIA & CORES GERAIS */
+    h1 {
+        background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800 !important;
+        letter-spacing: -1px !important;
+    }
+    h2, p, label, .stMarkdown, div, span { color: #e0e0e0 !important; }
+    
+    /* Remove links âncora */
+    .st-emotion-cache-1629p8f a, a.anchor-link { display: none !important; }
+
+    /* 3. INPUTS ESTILO "GLASS" (VIDRO ESCURO) */
+    .stTextInput > div > div > input {
+        background-color: rgba(255, 255, 255, 0.05) !important; /* Transparente */
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        padding: 15px !important;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    /* Efeito de Foco no Input (Brilho sutil) */
+    .stTextInput > div > div > input:focus {
+        border-color: #666666 !important;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    /* Input Numérico e Botão Lupa */
     div[data-testid="column"] button, .stNumberInput input {
-        background-color: #1c1c1c !important;
-        border: 1px solid #333333 !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: #e0e0e0 !important;
-        border-radius: 8px !important;
+        border-radius: 12px !important;
     }
 
-    /* === BOTÃO DE AÇÃO (PREPARAR) === */
+    /* 4. BOTÃO DE AÇÃO (INTERATIVO) */
     .stButton > button {
         width: 100%;
-        background-color: #ffffff !important; /* Branco Puro */
+        background-color: #ffffff !important;
         border: none !important;
-        border-radius: 8px !important;
-        padding: 0.8rem !important;
-        margin-top: 5px !important;
+        border-radius: 12px !important;
+        padding: 0.9rem !important;
+        margin-top: 10px !important;
         
-        /* Tipografia Profissional */
-        color: #000000 !important; /* Preto Absoluto */
+        color: #000000 !important;
         font-weight: 800 !important;
         text-transform: uppercase;
         font-size: 14px !important;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        
+        /* Transição Suave */
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     }
     
-    /* Garante que qualquer texto interno seja preto */
-    .stButton > button p, .stButton > button div {
-        color: #000000 !important;
-    }
-
+    /* Hover Effect (Cresce e brilha) */
     .stButton > button:hover {
-        background-color: #d1d1d1 !important;
-        box-shadow: 0 0 10px rgba(255,255,255,0.1);
+        transform: scale(1.02) translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 255, 255, 0.15);
+        background-color: #f0f0f0 !important;
     }
+    
+    .stButton > button p { color: #000000 !important; }
 
-    /* === BOTÃO DE DOWNLOAD FINAL (VERDE) === */
+    /* 5. BOTÃO DE DOWNLOAD FINAL (CYBER GREEN) */
     [data-testid="stDownloadButton"] > button {
         width: 100% !important;
-        background-color: #00ff88 !important; /* Verde Neon */
+        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important; /* Gradiente Neon */
         color: #000000 !important;
         border: none !important;
         font-weight: 900 !important;
-        border-radius: 8px !important;
+        border-radius: 12px !important;
         text-transform: uppercase;
-        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        transition: all 0.3s ease !important;
     }
     [data-testid="stDownloadButton"] > button:hover {
-        background-color: #00cc6a !important;
-        color: #000000 !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
     }
-    [data-testid="stDownloadButton"] > button p {
-        color: #000000 !important;
+    [data-testid="stDownloadButton"] > button p { color: #000000 !important; }
+
+    /* 6. ANIMAÇÃO DE ENTRADA (FADE IN) */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .stTextInput, .stButton, .stInfo, .stAlert {
+        animation: fadeIn 0.6s ease-out forwards;
     }
     
     /* Esconde menu padrão */
@@ -105,7 +138,7 @@ def get_stories_count(url, cookie_file):
         return 0
 
 # --- INÍCIO DO APP ---
-st.title("Downloader Pro")
+st.title("NexusDL")
 st.markdown("Insta • TikTok • X (Twitter)", help="Cole o link abaixo.")
 
 tmp_dir = "/tmp"
@@ -148,7 +181,7 @@ with st.container():
     is_story = False
     story_index = 1
     max_stories = 1
-    button_label = "PREPARAR DOWNLOAD" # Nome profissional padrão
+    button_label = "PREPARAR DOWNLOAD"
     status_msg = None
 
     if url:
@@ -156,7 +189,7 @@ with st.container():
         if "instagram.com/stories/" in url:
             is_story = True
             if 'story_count_cache' not in st.session_state:
-                with st.spinner("Analisando..."):
+                with st.spinner("Conectando ao Nexus..."):
                     count = get_stories_count(url, cookie_file)
                     st.session_state['story_count_cache'] = count
             
@@ -172,7 +205,7 @@ with st.container():
             else:
                 st.error("Stories indisponíveis.")
 
-        # 2. Identificação de Plataforma (Visual Feedback)
+        # 2. Identificação de Plataforma
         elif "instagram.com" in url:
             st.info("Instagram Reels/Post identificado")
         elif "x.com" in url or "twitter.com" in url:
@@ -195,7 +228,7 @@ with st.container():
                 prog = st.progress(0)
                 
                 try:
-                    status.markdown("Conectando ao servidor...")
+                    status.markdown("Iniciando extração de dados...")
                     prog.progress(20)
                     
                     ydl_opts = {
@@ -240,11 +273,10 @@ with st.container():
         col_dl, col_info = st.columns([1, 1])
         with col_dl:
             with open(path, "rb") as f:
-                # Botão final com destaque profissional
                 st.download_button(
                     label="BAIXAR ARQUIVO", 
                     data=f, 
-                    file_name="video_baixado.mp4", 
+                    file_name="NexusDL_Video.mp4", 
                     mime="video/mp4"
                 )
         
