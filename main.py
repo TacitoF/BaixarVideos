@@ -12,15 +12,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS REFINADO (ALINHAMENTO E ALTURA) ---
-# --- CSS REFINADO COM DESIGN MODERNO E TECNOLÓGICO ---
+# --- CSS REFINADO - TONS DE PRETO, BRANCO E CINZA ---
 st.markdown("""
     <style>
-    /* 1. BACKGROUND TECNOLÓGICO E MODERNO */
+    /* 1. BACKGROUND MONOCROMÁTICO E TECNOLÓGICO */
     .stApp {
         background: 
-            radial-gradient(circle at 15% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 85% 30%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
             linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
         background-attachment: fixed;
         font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -28,7 +27,7 @@ st.markdown("""
         overflow-x: hidden;
     }
     
-    /* Efeito de partículas sutis (apenas visual) */
+    /* Efeito de grade sutil (apenas visual) */
     .stApp::before {
         content: '';
         position: fixed;
@@ -37,12 +36,12 @@ st.markdown("""
         width: 100%;
         height: 100%;
         background-image: 
-            radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.03) 0px, transparent 2px),
-            radial-gradient(circle at 60% 10%, rgba(0, 255, 136, 0.03) 0px, transparent 2px),
-            radial-gradient(circle at 90% 40%, rgba(255, 255, 255, 0.02) 0px, transparent 2px);
-        background-size: 400px 400px, 600px 600px, 500px 500px;
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
         z-index: -1;
         pointer-events: none;
+        opacity: 0.3;
     }
     
     /* 2. CONTAINER PRINCIPAL - CENTRALIZADO PERFEITAMENTE */
@@ -59,7 +58,7 @@ st.markdown("""
         position: relative !important;
     }
     
-    /* Container com borda sutil e efeito de profundidade */
+    /* Container com borda sutil */
     .block-container::after {
         content: '';
         position: absolute;
@@ -103,7 +102,7 @@ st.markdown("""
         }
     }
     
-    /* 3. TÍTULO COM GRADIENTE DINÂMICO */
+    /* 3. TÍTULO COM GRADIENTE MONOCROMÁTICO */
     h1, h2, h3, p, label, .stMarkdown {
         text-align: center !important;
         color: #e0e0e0 !important;
@@ -111,7 +110,7 @@ st.markdown("""
     }
     
     h1 {
-        background: linear-gradient(90deg, #FFFFFF 0%, #00d4ff 50%, #00ff88 100%);
+        background: linear-gradient(90deg, #FFFFFF 0%, #AAAAAA 50%, #888888 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -131,8 +130,8 @@ st.markdown("""
         bottom: 0;
         left: 25%;
         width: 50%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     }
     
     /* Subtítulo */
@@ -145,11 +144,18 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* 4. INPUT DE LINK - DESIGN MODERNO */
+    /* 4. INPUT DE LINK - CENTRALIZADO VERTICALMENTE */
     .stTextInput {
         width: 100%;
         max-width: 500px;
         margin: 0 auto 1.5rem auto;
+    }
+    
+    /* Container do input para centralização vertical */
+    .stTextInput > div > div {
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
     }
     
     .stTextInput input {
@@ -159,7 +165,7 @@ st.markdown("""
         
         padding: 0 20px !important;
         border-radius: 12px !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
         
         background: rgba(255, 255, 255, 0.05) !important;
         backdrop-filter: blur(15px);
@@ -171,40 +177,62 @@ st.markdown("""
         
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        
+        /* Centralização vertical do texto */
+        display: flex !important;
+        align-items: center !important;
     }
     
-    .stTextInput input:hover {
-        border-color: rgba(0, 212, 255, 0.3) !important;
-        box-shadow: 0 6px 25px rgba(0, 212, 255, 0.15);
-        transform: translateY(-1px);
-    }
-    
-    .stTextInput input:focus {
-        border-color: rgba(0, 212, 255, 0.6) !important;
-        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1), 0 8px 30px rgba(0, 212, 255, 0.2) !important;
-        outline: none;
-        transform: translateY(-2px);
-    }
-    
+    /* Placeholder centralizado verticalmente */
     .stTextInput input::placeholder {
         color: rgba(255, 255, 255, 0.4) !important;
         text-align: center !important;
         font-size: 14px !important;
         letter-spacing: 0.5px;
         transition: color 0.2s ease;
+        line-height: normal !important;
+        position: relative;
+        top: 0;
+        transform: none;
+    }
+    
+    .stTextInput input:hover {
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        transform: translateY(-1px);
+    }
+    
+    .stTextInput input:focus {
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1), 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+        outline: none;
+        transform: translateY(-2px);
     }
     
     .stTextInput input:focus::placeholder {
         color: rgba(255, 255, 255, 0.2) !important;
     }
     
-    /* 5. BOTÕES - DESIGN COERENTE E CENTRALIZADO */
-    /* Container de botão centralizado */
-    .button-container {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        margin: 0.5rem 0 1.5rem 0;
+    /* 5. BOTÕES - DESIGN MONOCROMÁTICO E CENTRALIZADO NO MOBILE */
+    /* Container para centralizar o botão */
+    div[data-testid="column"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    
+    /* Garantir que as colunas se comportem corretamente no mobile */
+    @media (max-width: 768px) {
+        .stButton {
+            display: flex !important;
+            justify-content: center !important;
+            width: 100% !important;
+        }
+        
+        .stButton button {
+            max-width: 100% !important;
+        }
     }
     
     /* Botão VERIFICAR LINK */
@@ -213,8 +241,8 @@ st.markdown("""
         max-width: 280px !important;
         height: 46px !important;
         
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 12px !important;
         
         color: #ffffff !important;
@@ -229,6 +257,7 @@ st.markdown("""
         position: relative;
         overflow: hidden;
         z-index: 1;
+        margin: 0 auto !important;
     }
     
     .stButton button::before {
@@ -244,10 +273,10 @@ st.markdown("""
     }
     
     .stButton button:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-color: rgba(0, 212, 255, 0.4) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
     
     .stButton button:hover::before {
@@ -259,13 +288,19 @@ st.markdown("""
         transition: transform 0.1s ease;
     }
     
-    /* 6. BOTÃO DE DOWNLOAD (DESTAQUE TECNOLÓGICO) */
+    /* 6. BOTÃO DE DOWNLOAD (DESTAQUE MONOCROMÁTICO) */
+    [data-testid="stDownloadButton"] {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    
     [data-testid="stDownloadButton"] button {
         width: 100% !important;
         max-width: 280px !important;
         height: 52px !important;
         
-        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important;
+        background: linear-gradient(90deg, #ffffff 0%, #cccccc 100%) !important;
         background-size: 200% 100% !important;
         
         border: none !important;
@@ -278,11 +313,12 @@ st.markdown("""
         text-transform: uppercase;
         
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
         
         position: relative;
         overflow: hidden;
         z-index: 1;
+        margin: 0 auto !important;
     }
     
     [data-testid="stDownloadButton"] button::before {
@@ -292,7 +328,7 @@ st.markdown("""
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
         transition: left 0.7s ease;
         z-index: -1;
     }
@@ -300,7 +336,7 @@ st.markdown("""
     [data-testid="stDownloadButton"] button:hover {
         background-position: 100% 0 !important;
         transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(0, 255, 136, 0.35), 0 0 20px rgba(0, 212, 255, 0.2);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
     }
     
     [data-testid="stDownloadButton"] button:hover::before {
@@ -322,6 +358,7 @@ st.markdown("""
         text-align: center !important;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
     }
     
     /* 8. VIDEO PLAYER */
@@ -335,6 +372,12 @@ st.markdown("""
     }
     
     /* 9. NUMBER INPUT (PARA STORIES) */
+    .stNumberInput {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    
     .stNumberInput input {
         height: 46px !important;
         border-radius: 12px !important;
@@ -343,6 +386,8 @@ st.markdown("""
         color: white !important;
         text-align: center !important;
         font-weight: 600 !important;
+        max-width: 200px !important;
+        margin: 0 auto !important;
     }
     
     /* 10. ANIMAÇÕES SUAVES */
@@ -360,22 +405,13 @@ st.markdown("""
         animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
     
-    .stButton button {
-        animation: fadeInUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    }
-    
-    /* 11. EFEITO DE BRILHO SUTIL NO CONTAINER */
-    .block-container {
-        animation: glowPulse 8s ease-in-out infinite;
-    }
-    
-    /* 12. OCULTAR ELEMENTOS DO STREAMLIT */
+    /* 11. OCULTAR ELEMENTOS DO STREAMLIT */
     #MainMenu, footer, header, .stDeployButton {
         visibility: hidden !important;
         display: none !important;
     }
     
-    /* 13. SCROLLBAR PERSONALIZADA */
+    /* 12. SCROLLBAR PERSONALIZADA MONOCROMÁTICA */
     ::-webkit-scrollbar {
         width: 8px;
     }
@@ -386,14 +422,87 @@ st.markdown("""
     }
     
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #00ff88 0%, #00d4ff 100%);
+        background: linear-gradient(180deg, #888888 0%, #aaaaaa 100%);
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #00ff88 0%, #00aaff 100%);
+        background: linear-gradient(180deg, #aaaaaa 0%, #cccccc 100%);
+    }
+    
+    /* 13. CORREÇÃO ESPECÍFICA PARA CENTRALIZAÇÃO NO MOBILE */
+    @media (max-width: 768px) {
+        /* Forçar centralização dos botões no mobile */
+        div[data-testid="column"] {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* Garantir que todos os botões fiquem centralizados */
+        .stButton, [data-testid="stDownloadButton"] {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        
+        /* Ajuste do input no mobile */
+        .stTextInput {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        .stTextInput input {
+            font-size: 16px !important; /* Melhor para touch */
+        }
+    }
+    
+    /* 14. TOAST NOTIFICATION */
+    .stToast {
+        background: rgba(30, 30, 30, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    
+    /* 15. SPINNER */
+    .stSpinner > div {
+        border-color: #ffffff transparent transparent transparent !important;
     }
     </style>
+""", unsafe_allow_html=True)
+
+# --- AJUSTE NO CÓDIGO PARA GARANTIR CENTRALIZAÇÃO ---
+# Adicione esta função JavaScript para garantir centralização
+st.markdown("""
+    <script>
+    // Função para garantir centralização dos elementos
+    function centerElements() {
+        // Centralizar todos os botões
+        const buttons = document.querySelectorAll('.stButton, [data-testid="stDownloadButton"]');
+        buttons.forEach(button => {
+            if (button.parentElement) {
+                button.parentElement.style.display = 'flex';
+                button.parentElement.style.justifyContent = 'center';
+                button.parentElement.style.alignItems = 'center';
+            }
+        });
+        
+        // Centralizar input no mobile
+        if (window.innerWidth <= 768) {
+            const inputs = document.querySelectorAll('.stTextInput');
+            inputs.forEach(input => {
+                input.style.margin = '0 auto';
+            });
+        }
+    }
+    
+    // Executar quando a página carregar e quando redimensionar
+    window.addEventListener('load', centerElements);
+    window.addEventListener('resize', centerElements);
+    
+    // Executar após um pequeno delay para garantir que o Streamlit tenha renderizado
+    setTimeout(centerElements, 100);
+    </script>
 """, unsafe_allow_html=True)
 
 # --- FUNÇÃO AUXILIAR ---
