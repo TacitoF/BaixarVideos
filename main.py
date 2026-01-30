@@ -16,28 +16,21 @@ st.set_page_config(
 
 # --- FUNÇÃO LOG DISCORD ---
 def send_discord_log(error_msg, video_url):
-    # Verifica se o segredo existe antes de tentar enviar
     if "general" in st.secrets and "DISCORD_WEBHOOK" in st.secrets["general"]:
         webhook_url = st.secrets["general"]["DISCORD_WEBHOOK"]
     else:
-        return # Se não tiver webhook configurado, não faz nada
+        return
 
-    clean_msg = str(error_msg)[:800] # Limita o tamanho da mensagem
+    clean_msg = str(error_msg)[:800]
     
-    # --- LÓGICA DE COR E TÍTULO ---
-    # Verifica se a URL ou a Origem contém palavras-chave de feedback
     is_feedback = "FEEDBACK" in video_url or "REPORT" in video_url
     
     title = "📢 Novo Feedback" if is_feedback else "🚨 Falha no Download"
-    
-    # Cores Decimais:
-    # 3447003  = Azul (#3498DB) -> Feedback
-    # 15548997 = Vermelho (#ED4245) -> Erro
     color = 3447003 if is_feedback else 15548997
 
     data = {
         "username": "NexusDL Monitor",
-        "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png", # Ícone de alerta
+        "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
         "embeds": [{
             "title": title,
             "color": color, 
@@ -51,16 +44,14 @@ def send_discord_log(error_msg, video_url):
     try:
         requests.post(webhook_url, json=data, timeout=3)
     except:
-        pass # Falha silenciosa no log para não travar o app pro usuário
+        pass
 
 # --- FUNÇÃO PARA LIMPAR MENSAGENS DE ERRO ---
 def clean_error_message(error_text):
     text = str(error_text)
-    # Remove códigos de cores ANSI
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     text = ansi_escape.sub('', text)
     
-    # --- TRADUÇÕES ---
     if "not a valid URL" in text or "Unsupported URL" in text:
         return "⚠️ Link inválido. Certifique-se de copiar a URL completa (http/https)."
         
@@ -75,7 +66,7 @@ def clean_error_message(error_text):
         
     return f"Erro técnico: {text[:200]}..."
 
-# --- CSS (COM A REGRA PARA OCULTAR O 'PRESS ENTER') ---
+# --- CSS (ATUALIZADO PARA REMOVER BORDA VERMELHA E CENTRALIZAR BOTÕES) ---
 st.markdown("""
     <style>
     /* 1. BACKGROUND MONOCROMÁTICO E TECNOLÓGICO */
@@ -195,7 +186,7 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* 4. INPUT */
+    /* 4. INPUT (ATUALIZADO - BORDA NEUTRA) */
     .stTextInput {
         width: 100%;
         max-width: 500px;
@@ -206,23 +197,30 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         height: 100% !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        border-width: 1.5px !important;
     }
-    
+
+    /* BORDA CINZA NO FOCO - REMOVIDA BORDA VERMELHA */
+    .stTextInput > div > div:focus-within {
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+    }
+
     .stTextInput input {
         height: 48px !important;
         line-height: 48px !important;
         min-height: 48px !important;
         padding: 0 20px !important;
-        border-radius: 12px !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
-        background: rgba(255, 255, 255, 0.05) !important;
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         color: white !important;
+        caret-color: white !important;
         font-size: 15px !important;
         font-weight: 400;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         display: flex !important;
         align-items: center !important;
     }
@@ -239,33 +237,37 @@ st.markdown("""
         transform: none;
     }
     
-    .stTextInput input:hover {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-        transform: translateY(-1px);
+    /* REMOVE INSTRUÇÃO 'PRESS ENTER' */
+    [data-testid="InputInstructions"] {
+        display: none !important;
     }
     
-    .stTextInput input:focus {
-        border-color: rgba(255, 255, 255, 0.5) !important;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1), 0 8px 30px rgba(0, 0, 0, 0.4) !important;
-        outline: none;
-        transform: translateY(-2px);
-    }
-    
-    /* 5. BOTÕES */
-    div[data-testid="column"] {
+    /* 5. BOTÕES (ATUALIZADO - SEMPRE CENTRALIZADOS) */
+    .stButton, [data-testid="stDownloadButton"], .stFormSubmitButton {
         display: flex !important;
         justify-content: center !important;
-        align-items: center !important;
         width: 100% !important;
+        margin: 0 auto !important;
+    }
+    
+    .stButton > button, 
+    [data-testid="stDownloadButton"] > button,
+    .stFormSubmitButton > button {
+        width: 100% !important;
+        max-width: 280px !important;
+        margin: 0 auto !important;
+        display: block !important;
     }
     
     @media (max-width: 768px) {
-        .stButton { display: flex !important; justify-content: center !important; width: 100% !important; }
-        .stButton button { max-width: 100% !important; }
+        .stButton, [data-testid="stDownloadButton"], .stFormSubmitButton { 
+            width: 100% !important; 
+            max-width: 100% !important;
+        }
     }
     
-    .stButton button {
+    .stButton button,
+    .stFormSubmitButton button {
         width: 100% !important;
         max-width: 280px !important;
         height: 46px !important;
@@ -285,7 +287,8 @@ st.markdown("""
         margin: 0 auto !important;
     }
     
-    .stButton button::before {
+    .stButton button::before,
+    .stFormSubmitButton button::before {
         content: '';
         position: absolute;
         top: 0;
@@ -297,42 +300,53 @@ st.markdown("""
         z-index: -1;
     }
     
-    .stButton button:hover {
+    .stButton button:hover,
+    .stFormSubmitButton button:hover {
         background: rgba(255, 255, 255, 0.12) !important;
         border-color: rgba(255, 255, 255, 0.3) !important;
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
     
-    .stButton button:hover::before { left: 100%; }
-    .stButton button:active { transform: translateY(0); transition: transform 0.1s ease; }
+    .stButton button:hover::before,
+    .stFormSubmitButton button:hover::before { left: 100%; }
+    .stButton button:active,
+    .stFormSubmitButton button:active { transform: translateY(0); transition: transform 0.1s ease; }
     
-    /* 6. BOTÃO DE DOWNLOAD */
+    /* 6. BOTÃO DE DOWNLOAD (ATUALIZADO - CENTRALIZADO E COM MESMO LAYOUT) */
     [data-testid="stDownloadButton"] {
         display: flex !important;
         justify-content: center !important;
+        align-items: center !important;
         width: 100% !important;
+    }
+    
+    [data-testid="stDownloadButton"] > div {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 auto !important;
     }
     
     [data-testid="stDownloadButton"] button {
         width: 100% !important;
         max-width: 280px !important;
-        height: 52px !important;
-        background: linear-gradient(90deg, #ffffff 0%, #cccccc 100%) !important;
-        background-size: 200% 100% !important;
-        border: none !important;
+        height: 46px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 12px !important;
-        color: #000000 !important;
-        font-weight: 900 !important;
-        font-size: 13px !important;
-        letter-spacing: 1.5px;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        letter-spacing: 1.2px;
         text-transform: uppercase;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         position: relative;
         overflow: hidden;
         z-index: 1;
         margin: 0 auto !important;
+        display: block !important;
     }
     
     [data-testid="stDownloadButton"] button::before {
@@ -342,19 +356,26 @@ st.markdown("""
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
         transition: left 0.7s ease;
         z-index: -1;
     }
     
     [data-testid="stDownloadButton"] button:hover {
-        background-position: 100% 0 !important;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
     
     [data-testid="stDownloadButton"] button:hover::before { left: 100%; }
-    [data-testid="stDownloadButton"] button p { color: #000000 !important; font-weight: 900 !important; margin: 0; }
+    [data-testid="stDownloadButton"] button:active { transform: translateY(0); transition: transform 0.1s ease; }
+    
+    [data-testid="stDownloadButton"] button p { 
+        color: #ffffff !important; 
+        font-weight: 700 !important; 
+        margin: 0; 
+    }
     
     /* 7. ELEMENTOS DE STATUS */
     .stAlert, .stInfo, .stSuccess, .stWarning, .stError {
@@ -404,11 +425,6 @@ st.markdown("""
     /* 11. OCULTAR ELEMENTOS */
     #MainMenu, footer, header, .stDeployButton { visibility: hidden !important; display: none !important; }
     
-    /* --> NOVO: OCULTA O 'PRESS ENTER TO APPLY' <-- */
-    [data-testid="InputInstructions"] {
-        display: none !important;
-    }
-    
     /* 12. SCROLLBAR */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 4px; }
@@ -418,7 +434,11 @@ st.markdown("""
     /* 13. MOBILE */
     @media (max-width: 768px) {
         div[data-testid="column"] { padding-left: 0 !important; padding-right: 0 !important; }
-        .stButton, [data-testid="stDownloadButton"] { display: flex !important; justify-content: center !important; align-items: center !important; }
+        .stButton, [data-testid="stDownloadButton"], .stFormSubmitButton { 
+            display: flex !important; 
+            justify-content: center !important; 
+            align-items: center !important; 
+        }
         .stTextInput { padding-left: 0 !important; padding-right: 0 !important; }
         .stTextInput input { font-size: 16px !important; }
     }
@@ -426,6 +446,45 @@ st.markdown("""
     /* 14. TOAST E SPINNER */
     .stToast { background: rgba(30, 30, 30, 0.95) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important; backdrop-filter: blur(10px) !important; }
     .stSpinner > div { border-color: #ffffff transparent transparent transparent !important; }
+    
+    /* 15. COLUNAS PARA CENTRALIZAÇÃO */
+    .stColumns {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    .stColumns > div {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    
+    /* 16. FORM STYLES */
+    .stForm {
+        margin-top: 1rem !important;
+    }
+    
+    .stForm > div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    /* 17. ESPECÍFICO PARA BOTÕES DE DOWNLOAD DENTRO DE COLUNAS */
+    [data-testid="column"] [data-testid="stDownloadButton"] {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+    
+    /* 18. FORÇAR CENTRALIZAÇÃO DO CONTAINER DO DOWNLOAD BUTTON */
+    div[data-testid="stDownloadButton"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -433,22 +492,103 @@ st.markdown("""
 st.markdown("""
     <script>
     function centerElements() {
-        const buttons = document.querySelectorAll('.stButton, [data-testid="stDownloadButton"]');
+        // Centralizar todos os botões
+        const buttons = document.querySelectorAll('.stButton, .stFormSubmitButton');
         buttons.forEach(button => {
             if (button.parentElement) {
                 button.parentElement.style.display = 'flex';
                 button.parentElement.style.justifyContent = 'center';
                 button.parentElement.style.alignItems = 'center';
+                button.parentElement.style.width = '100%';
             }
         });
+        
+        // Centralizar botão de download específico
+        const downloadButtons = document.querySelectorAll('[data-testid="stDownloadButton"]');
+        downloadButtons.forEach(button => {
+            button.style.display = 'flex';
+            button.style.justifyContent = 'center';
+            button.style.alignItems = 'center';
+            button.style.width = '100%';
+            button.style.margin = '0 auto';
+            
+            // Garantir que o container interno também esteja centralizado
+            const innerDiv = button.querySelector('div');
+            if (innerDiv) {
+                innerDiv.style.display = 'flex';
+                innerDiv.style.justifyContent = 'center';
+                innerDiv.style.width = '100%';
+            }
+        });
+        
+        // Centralizar colunas
+        const columns = document.querySelectorAll('.stColumns > div, [data-testid="column"]');
+        columns.forEach(col => {
+            col.style.display = 'flex';
+            col.style.justifyContent = 'center';
+            col.style.alignItems = 'center';
+            col.style.flexDirection = 'column';
+        });
+        
+        // Mobile adjustments
         if (window.innerWidth <= 768) {
             const inputs = document.querySelectorAll('.stTextInput');
-            inputs.forEach(input => { input.style.margin = '0 auto'; });
+            inputs.forEach(input => { 
+                input.style.margin = '0 auto'; 
+                input.style.maxWidth = '100%';
+            });
         }
     }
-    window.addEventListener('load', centerElements);
-    window.addEventListener('resize', centerElements);
-    setTimeout(centerElements, 100);
+    
+    // Função para centralizar específicamente os botões de download
+    function centerDownloadButtons() {
+        const downloadContainers = document.querySelectorAll('[data-testid="stDownloadButton"]');
+        downloadContainers.forEach(container => {
+            // Garantir que o container principal esteja centralizado
+            container.style.display = 'flex';
+            container.style.justifyContent = 'center';
+            container.style.alignItems = 'center';
+            container.style.width = '100%';
+            container.style.margin = '0 auto';
+            
+            // Garantir que o botão dentro do container esteja centralizado
+            const button = container.querySelector('button');
+            if (button) {
+                button.style.margin = '0 auto';
+                button.style.display = 'block';
+            }
+            
+            // Se estiver dentro de uma coluna, centralizar a coluna também
+            let parent = container.parentElement;
+            while (parent && !parent.classList.contains('stApp')) {
+                if (parent.getAttribute('data-testid') === 'column') {
+                    parent.style.display = 'flex';
+                    parent.style.justifyContent = 'center';
+                    parent.style.alignItems = 'center';
+                }
+                parent = parent.parentElement;
+            }
+        });
+    }
+    
+    window.addEventListener('load', function() {
+        centerElements();
+        centerDownloadButtons();
+    });
+    window.addEventListener('resize', function() {
+        centerElements();
+        centerDownloadButtons();
+    });
+    window.addEventListener('DOMContentLoaded', function() {
+        centerElements();
+        centerDownloadButtons();
+    });
+    
+    // Verificar periodicamente para garantir centralização
+    setInterval(function() {
+        centerElements();
+        centerDownloadButtons();
+    }, 100);
     </script>
 """, unsafe_allow_html=True)
 
@@ -490,9 +630,10 @@ if 'last_url' not in st.session_state: st.session_state.last_url = ""
 with st.container():
     url = st.text_input("Link", placeholder="Cole o link da mídia aqui...", label_visibility="collapsed", key="url_input")
     
-    b_col1, b_col2, b_col3 = st.columns([5, 4, 5])
-    with b_col2:
-        check_click = st.button("VERIFICAR LINK", help="Clique para processar")
+    # Botão VERIFICAR LINK centralizado
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        check_click = st.button("VERIFICAR LINK", help="Clique para processar", use_container_width=True)
 
     if url != st.session_state.last_url:
         for k in ['current_video_path', 'download_success', 'story_count_cache', 'story_processed']:
@@ -513,13 +654,16 @@ with st.container():
                 max_stories = st.session_state['story_count_cache']
                 if max_stories > 0:
                     st.info(f"📸 {max_stories} Stories disponíveis")
-                    s_col1, s_col2, s_col3 = st.columns([5, 4, 5])
-                    with s_col2:
+                    
+                    # Número de story centralizado
+                    col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
+                    with col_s2:
                         story_index = st.number_input("Nº", 1, max_stories, 1, label_visibility="collapsed")
                     
-                    act_col1, act_col2, act_col3 = st.columns([5, 4, 5])
-                    with act_col2:
-                        if st.button(f"BAIXAR STORY {story_index}"):
+                    # Botão BAIXAR STORY centralizado
+                    col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
+                    with col_b2:
+                        if st.button(f"BAIXAR STORY {story_index}", use_container_width=True):
                             download_now = True
                 else:
                     st.error("Stories indisponíveis (Login necessário).")
@@ -573,11 +717,17 @@ with st.container():
         st.video(path)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        dl_col1, dl_col2, dl_col3 = st.columns([5, 4, 5])
-        with dl_col2:
+        # Botão BAIXAR ARQUIVO centralizado (CORRIGIDO)
+        col_d1, col_d2, col_d3 = st.columns([1, 2, 1])
+        with col_d2:
             with open(path, "rb") as f:
-                st.download_button("BAIXAR ARQUIVO", f, f"NexusDL_{timestamp}.mp4", "video/mp4")
-        st.toast("✅ Pronto!", icon=None)
+                st.download_button(
+                    "BAIXAR ARQUIVO", 
+                    f, 
+                    f"NexusDL_{timestamp}.mp4", 
+                    "video/mp4",
+                    use_container_width=True
+                )
     
     st.markdown("---")
     
@@ -600,7 +750,10 @@ with st.container():
                 email_contato = st.text_input("Seu E-mail (Opcional)", placeholder="Contato...")
                 descricao_erro = st.text_area("Detalhes do erro", placeholder="Ex: O vídeo baixou sem áudio...", height=100)
                 
-                enviar_report = st.form_submit_button("Enviar Reporte")
+                # Botão ENVIAR REPORTE centralizado
+                col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
+                with col_e2:
+                    enviar_report = st.form_submit_button("Enviar Reporte", use_container_width=True)
                 
                 if enviar_report and descricao_erro:
                     msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
