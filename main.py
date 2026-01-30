@@ -11,12 +11,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS PROFISSIONAL (CORRIGIDO) ---
+# --- CSS PROFISSIONAL (VISUAL DARK & CONTRASTE CORRIGIDO) ---
 st.markdown("""
     <style>
-    /* Fundo e Fonte */
+    /* Fundo e Fonte Geral */
     .stApp { background-color: #0e0e0e; font-family: 'Helvetica Neue', Arial, sans-serif; }
-    h1, h2, p, label, .stMarkdown, div { color: #e0e0e0 !important; }
+    h1, h2, p, label, .stMarkdown, div, span { color: #e0e0e0 !important; }
     
     /* Inputs */
     .stTextInput > div > div > input {
@@ -27,51 +27,61 @@ st.markdown("""
         padding: 12px !important;
     }
     
-    /* Botão Lupa (Check) */
-    div[data-testid="column"] button {
+    /* Botão Lupa e Inputs Numéricos */
+    div[data-testid="column"] button, .stNumberInput input {
         background-color: #1c1c1c !important;
         border: 1px solid #333333 !important;
         color: #e0e0e0 !important;
         border-radius: 8px !important;
     }
 
-    /* Botão de Ação Principal (PROCESSAR) */
+    /* === BOTÃO DE AÇÃO (PREPARAR) === */
     .stButton > button {
         width: 100%;
-        background-color: #ffffff !important;
+        background-color: #ffffff !important; /* Branco Puro */
         border: none !important;
         border-radius: 8px !important;
         padding: 0.8rem !important;
-        font-weight: 700 !important;
         margin-top: 5px !important;
-        color: #000000 !important;
+        
+        /* Tipografia Profissional */
+        color: #000000 !important; /* Preto Absoluto */
+        font-weight: 800 !important;
         text-transform: uppercase;
         font-size: 14px !important;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
     }
-    .stButton > button:hover { background-color: #cccccc !important; }
+    
+    /* Garante que qualquer texto interno seja preto */
+    .stButton > button p, .stButton > button div {
+        color: #000000 !important;
+    }
 
-    /* CORREÇÃO DO BOTÃO DE DOWNLOAD FINAL */
+    .stButton > button:hover {
+        background-color: #d1d1d1 !important;
+        box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    /* === BOTÃO DE DOWNLOAD FINAL (VERDE) === */
     [data-testid="stDownloadButton"] > button {
         width: 100% !important;
-        background-color: #4CAF50 !important; /* Verde profissional para destaque final */
-        color: #ffffff !important;
+        background-color: #00ff88 !important; /* Verde Neon */
+        color: #000000 !important;
         border: none !important;
-        font-weight: bold !important;
+        font-weight: 900 !important;
         border-radius: 8px !important;
         text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
     }
     [data-testid="stDownloadButton"] > button:hover {
-        background-color: #45a049 !important;
+        background-color: #00cc6a !important;
+        color: #000000 !important;
+    }
+    [data-testid="stDownloadButton"] > button p {
+        color: #000000 !important;
     }
     
-    /* Alerts e Infos */
-    .stAlert {
-        background-color: #1c1c1c !important;
-        color: #cccccc !important;
-        border: 1px solid #333333 !important;
-    }
-    
+    /* Esconde menu padrão */
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -96,16 +106,14 @@ def get_stories_count(url, cookie_file):
 
 # --- INÍCIO DO APP ---
 st.title("Downloader Pro")
-st.markdown("Insta • TikTok • X (Twitter)", help="Insira o link para identificar a plataforma.")
+st.markdown("Insta • TikTok • X (Twitter)", help="Cole o link abaixo.")
 
 tmp_dir = "/tmp"
-# Cria o diretório tmp se não existir (para teste local funcionar)
 if not os.path.exists(tmp_dir):
     os.makedirs(tmp_dir)
 
 cookie_file = os.path.join(tmp_dir, "cookies.txt")
 
-# Suporte a cookies (Local e Nuvem)
 if "general" in st.secrets:
     with open(cookie_file, "w", encoding="utf-8") as f:
         f.write(st.secrets["general"]["COOKIES_DATA"])
@@ -140,7 +148,7 @@ with st.container():
     is_story = False
     story_index = 1
     max_stories = 1
-    button_label = "PROCESSAR LINK" # Texto alterado conforme pedido
+    button_label = "PREPARAR DOWNLOAD" # Nome profissional padrão
     status_msg = None
 
     if url:
@@ -160,28 +168,19 @@ with st.container():
                     st.info(f"Instagram Story • {max_stories} disponíveis")
                 with c2:
                     story_index = st.number_input("Nº", min_value=1, max_value=max_stories, value=1, step=1, label_visibility="collapsed")
-                button_label = f"PROCESSAR STORY Nº {story_index}"
+                button_label = f"PREPARAR STORY Nº {story_index}"
             else:
-                st.error("Stories indisponíveis (Conta privada ou expirada).")
+                st.error("Stories indisponíveis.")
 
-        # 2. Instagram Reels/Post
+        # 2. Identificação de Plataforma (Visual Feedback)
         elif "instagram.com" in url:
             st.info("Instagram Reels/Post identificado")
-            button_label = "PROCESSAR INSTAGRAM"
-
-        # 3. X / Twitter
         elif "x.com" in url or "twitter.com" in url:
             st.info("Link do X (Twitter) identificado")
-            button_label = "PROCESSAR VÍDEO X"
-
-        # 4. TikTok
         elif "tiktok.com" in url:
             st.info("Link do TikTok identificado")
-            button_label = "PROCESSAR TIKTOK"
-        
-        # 5. YouTube (Bloqueio)
         elif "youtube.com" in url or "youtu.be" in url:
-            st.error("YouTube não suportado pela plataforma.")
+            st.error("YouTube não suportado.")
             button_label = None
 
         # --- BOTÃO DE AÇÃO ---
@@ -189,7 +188,6 @@ with st.container():
             if is_story and max_stories == 0:
                 st.error("Erro na seleção.")
             else:
-                # Nome do arquivo temporário
                 output_path = os.path.join(tmp_dir, f"download_{int(time.time())}.mp4")
                 if os.path.exists(output_path): os.remove(output_path)
                 
@@ -197,7 +195,7 @@ with st.container():
                 prog = st.progress(0)
                 
                 try:
-                    status.markdown("Iniciando extração...")
+                    status.markdown("Conectando ao servidor...")
                     prog.progress(20)
                     
                     ydl_opts = {
@@ -226,11 +224,11 @@ with st.container():
                         prog.empty()
                         st.rerun()
                     else:
-                        status.error("Falha no download. Arquivo vazio.")
+                        status.error("Falha no download.")
                         prog.empty()
 
                 except Exception as e:
-                    status.error(f"Erro no servidor: {e}")
+                    status.error(f"Erro: {e}")
                     prog.empty()
 
     # --- EXIBIÇÃO FINAL ---
@@ -242,7 +240,7 @@ with st.container():
         col_dl, col_info = st.columns([1, 1])
         with col_dl:
             with open(path, "rb") as f:
-                # Botão final com nome claro e CSS corrigido
+                # Botão final com destaque profissional
                 st.download_button(
                     label="BAIXAR ARQUIVO", 
                     data=f, 
@@ -250,4 +248,4 @@ with st.container():
                     mime="video/mp4"
                 )
         
-        st.toast("✅ Vídeo pronto! Clique em 'BAIXAR ARQUIVO' para salvar.", icon=None)
+        st.toast("✅ Pronto! Clique em 'BAIXAR ARQUIVO' para salvar.", icon=None)
