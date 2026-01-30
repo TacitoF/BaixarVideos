@@ -4,28 +4,14 @@ import os
 import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(
-    page_title="Downloader Universal",
-    page_icon="⚫",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+st.set_page_config(page_title="Downloader Pro", page_icon="⚫", layout="centered")
 
-# --- CSS MODERNO (VISUAL DARK & ALTO CONTRASTE) ---
+# --- CSS DARK MINIMALISTA (CORRIGIDO) ---
 st.markdown("""
     <style>
-    /* 1. Fundo Geral */
-    .stApp {
-        background-color: #0e0e0e;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
+    .stApp { background-color: #0e0e0e; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    h1, p, label { color: #e0e0e0 !important; }
     
-    /* 2. Textos Gerais */
-    h1, h2, h3, p, label, .stMarkdown, .stInfo {
-        color: #e0e0e0 !important;
-    }
-    
-    /* 3. Inputs de Texto */
     .stTextInput > div > div > input {
         background-color: #1c1c1c !important;
         color: #ffffff !important;
@@ -33,184 +19,63 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 12px !important;
     }
-    .stTextInput > div > div > input::placeholder {
-        color: #888888 !important;
-        opacity: 1;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #555555 !important;
-    }
+    .stTextInput > div > div > input::placeholder { color: #888888 !important; }
 
-    /* 4. Input Numérico */
-    .stNumberInput > div > div > input {
-        background-color: #1c1c1c !important;
-        color: white !important;
-        border: 1px solid #333333 !important;
-        border-radius: 12px;
-    }
-    button[kind="secondary"] {
-        background-color: #1c1c1c !important;
-        border: 1px solid #333333 !important;
-        color: #e0e0e0 !important;
-    }
-
-    /* 5. Botão Principal */
     .stButton > button {
         width: 100%;
         background-color: #e0e0e0 !important;
-        border: none !important;
         border-radius: 12px !important;
-        padding: 0.75rem !important;
         font-weight: 700 !important;
-        margin-top: 10px !important;
-        transition: all 0.3s ease !important;
+        height: 3.5rem !important;
+        transition: 0.3s;
+        border: none !important;
     }
-    /* Força texto preto no botão */
-    .stButton > button, .stButton > button p {
-        color: #000000 !important;
-    }
-    .stButton > button:hover {
-        background-color: #ffffff !important;
-        transform: scale(1.01);
-        box-shadow: 0 4px 12px rgba(255,255,255,0.1);
-    }
+    .stButton > button p { color: #000000 !important; } /* Texto do botão sempre preto */
+    .stButton > button:hover { background-color: #ffffff !important; transform: scale(1.01); }
 
-    /* 6. Remove elementos padrão */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header { visibility: hidden; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNÇÃO DE RESET (Limpa a tela ao mudar o link) ---
-def reset_interface():
-    """Apaga o vídeo e mensagens anteriores quando o link muda."""
-    if 'current_video_path' in st.session_state:
-        del st.session_state['current_video_path']
-    if 'download_success' in st.session_state:
-        del st.session_state['download_success']
-
-# --- CABEÇALHO ---
 st.title("⚫ Downloader Pro")
-st.markdown(
-    """
-    Suporte total para: **Instagram, TikTok, Facebook, X (Twitter), Pinterest**, entre outros.
-    \n⚠️ *Este site não suporta downloads do YouTube.*
-    """
-)
+st.markdown("Download de Reels e Posts (Mídias Públicas). \n\n⚠️ *Stories e YouTube não são suportados nesta versão sem login.*")
 
-# --- GERENCIAMENTO DE COOKIES ---
-tmp_dir = "/tmp"
-cookie_file = os.path.join(tmp_dir, "master_cookies.txt")
-if "general" in st.secrets:
-    with open(cookie_file, "w", encoding="utf-8") as f:
-        f.write(st.secrets["general"]["COOKIES_DATA"])
+# Limpeza automática ao mudar o link
+def reset():
+    if 'video' in st.session_state: del st.session_state['video']
 
-# --- LÓGICA DE INTERFACE ---
-with st.container():
-    # O parametro on_change chama a função de reset assim que o texto muda
-    url = st.text_input(
-        "Link da Mídia", 
-        placeholder="Cole o link do Instagram, TikTok ou Facebook...", 
-        label_visibility="collapsed",
-        on_change=reset_interface
-    )
+url = st.text_input("", placeholder="Cole o link do Instagram aqui...", on_change=reset)
 
-    is_story = False
-    story_index = 1
-    button_label = "BAIXAR MÍDIA"
-
-    # Detecção de Stories do Instagram
-    if url and "instagram.com/stories/" in url:
-        is_story = True
-        st.markdown("---")
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.info(f"📸 **Story detectado!** Selecione o número ao lado:")
-        with col2:
-            story_index = st.number_input("Nº", min_value=1, value=1, step=1, label_visibility="collapsed")
-        
-        button_label = f"BAIXAR STORY Nº {story_index}"
-
-    # Verificação de YouTube (Bloqueio Visual)
-    is_youtube = url and ("youtube.com" in url or "youtu.be" in url)
-
-    if is_youtube:
-        st.error("🚫 Downloads do YouTube não são permitidos. Tente outra plataforma.")
-        reset_interface() # Garante que nada fique na tela se for youtube
+if url:
+    if "stories" in url:
+        st.warning("📥 **Atenção:** Stories exigem login privado. Esta versão 'Sem Cookies' não consegue acessá-los para proteger sua conta.")
+    elif "youtube.com" in url or "youtu.be" in url:
+        st.error("🚫 O YouTube não é suportado nesta plataforma.")
     else:
-        # Seção do Botão e Processamento
-        if st.button(button_label):
-            reset_interface() # Garante limpeza antes de começar um novo
+        if st.button("BAIXAR AGORA"):
+            output_path = f"/tmp/video_{int(time.time())}.mp4"
+            status = st.empty()
             
-            if not url:
-                st.toast("⚠️ Por favor, cole um link primeiro.")
-            else:
-                output_path = os.path.join(tmp_dir, f"media_final_{int(time.time())}.mp4")
-                if os.path.exists(output_path): os.remove(output_path)
-                
-                status_text = st.empty()
-                progress_bar = st.progress(0)
-                
-                try:
-                    status_text.markdown("🔄 **Iniciando conexão...**")
-                    progress_bar.progress(20)
-                    
-                    ydl_opts = {
-                        'format': 'best',
-                        'outtmpl': output_path,
-                        'cookiefile': cookie_file,
-                        'nocheckcertificate': True,
-                        'quiet': True,
-                        'no_warnings': True,
-                        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                    }
+            try:
+                status.markdown("🔄 **Conectando...**")
+                ydl_opts = {
+                    'format': 'best',
+                    'outtmpl': output_path,
+                    'nocheckcertificate': True,
+                    'quiet': True,
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                }
 
-                    if is_story:
-                        ydl_opts['playlist_items'] = str(story_index)
-                        status_text.markdown(f"🔄 **Baixando Story nº {story_index}...**")
-                    else:
-                        status_text.markdown("🔄 **Processando mídia...**")
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
 
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        ydl.download([url])
-                    
-                    progress_bar.progress(80)
-
-                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                        progress_bar.progress(100)
-                        
-                        # Salvando estado para persistir o vídeo
-                        st.session_state['current_video_path'] = output_path
-                        st.session_state['download_success'] = True
-                        
-                        status_text.success("✅ **Sucesso!**")
-                        time.sleep(0.5)
-                        progress_bar.empty()
-                        
-                        # Força rerun para exibir o vídeo usando o Session State
-                        st.rerun()
-                        
-                    else:
-                        status_text.error("❌ Erro: Arquivo vazio ou mídia não encontrada.")
-                        progress_bar.empty()
-
-                except Exception as e:
-                    status_text.error(f"Erro: {e}")
-                    progress_bar.empty()
-
-    # --- ÁREA DE EXIBIÇÃO DE RESULTADO (PERSISTENTE) ---
-    # Só aparece se houver um download salvo na sessão E o link não tiver mudado
-    if 'download_success' in st.session_state and st.session_state['download_success']:
-        path = st.session_state['current_video_path']
-        
-        st.markdown("---")
-        st.video(path)
-        
-        with open(path, "rb") as f:
-            st.download_button(
-                label="SALVAR NA GALERIA",
-                data=f,
-                file_name=f"media_download.mp4",
-                mime="video/mp4"
-            )
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    st.session_state['video'] = output_path
+                    status.success("✅ **Sucesso!**")
+                    st.video(output_path)
+                    with open(output_path, "rb") as f:
+                        st.download_button("SALVAR NA GALERIA", f, "video.mp4", "video/mp4")
+                else:
+                    status.error("❌ O Instagram bloqueou o servidor. Sem cookies, o download em nuvem é instável.")
+            except Exception as e:
+                status.error(f"Erro: O Instagram exige autenticação para este link.")
