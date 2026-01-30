@@ -14,43 +14,109 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- FUNÇÃO LOG DISCORD ---
+# --- FUNÇÃO LOG DISCORD (ATUALIZADA COM FORMATAÇÃO MELHOR) ---
 def send_discord_log(error_msg, video_url):
-    if "general" in st.secrets and "DISCORD_WEBHOOK" in st.secrets["general"]:
-        webhook_url = st.secrets["general"]["DISCORD_WEBHOOK"]
-    else:
-        return
-
     clean_msg = str(error_msg)[:800]
     
-    is_feedback = "FEEDBACK" in video_url or "REPORT" in video_url
+    # Determinar se é feedback baseado no conteúdo
+    is_feedback = "FEEDBACK" in str(video_url) or "REPORT" in str(video_url) or "feedback" in str(error_msg).lower()
     
-    title = "📢 Novo Feedback" if is_feedback else "🚨 Falha no Download"
-    color = 3447003 if is_feedback else 15548997
+    # Escolher o webhook correto baseado no tipo
+    if is_feedback:
+        webhook_key = "DISCORD_WEBHOOK_FEEDBACK"
+        color = 3447003  # Azul para feedback
+        username = "NexusDL Feedback"
+        
+        # Processar mensagem de feedback
+        if "**Contato:**" in clean_msg and "**Relato:**" in clean_msg:
+            # Extrair contato e relato do feedback
+            parts = clean_msg.split("**Contato:**")[1].split("**Relato:**")
+            contato = parts[0].strip() if len(parts) > 0 else "Não informado"
+            relato = parts[1].strip() if len(parts) > 1 else clean_msg
+            
+            if contato == " " or contato == "":
+                contato = "Não informado"
+            
+            title = "📢 NOVO FEEDBACK"
+            fields = [
+                {"name": "📧 Contato", "value": f"```{contato}```", "inline": False},
+                {"name": "📝 Relato", "value": f"```{relato[:1000]}```", "inline": False},
+                {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
+            ]
+        else:
+            title = "📢 NOVO FEEDBACK"
+            fields = [
+                {"name": "📝 Mensagem", "value": f"```{clean_msg}```", "inline": False},
+                {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
+            ]
+    else:
+        webhook_key = "DISCORD_WEBHOOK_ERROR"
+        color = 15548997  # Vermelho para erro
+        username = "NexusDL Monitor"
+        
+        # Limpar a mensagem de erro
+        error_display = clean_msg
+        # Remover códigos ANSI e formatação estranha
+        error_display = re.sub(r'❌\[0;31m', '', error_display)
+        error_display = re.sub(r'❌\[0m', '', error_display)
+        error_display = re.sub(r'\[0;31m', '', error_display)
+        error_display = re.sub(r'\[0m', '', error_display)
+        error_display = re.sub(r'ERROR:', 'ERRO:', error_display)
+        
+        # Formatar URL para exibição
+        url_display = str(video_url)[:200]
+        if len(str(video_url)) > 200:
+            url_display = url_display + "..."
+        
+        title = "🚨 FALHA NO DOWNLOAD"
+        fields = [
+            {"name": "🔗 URL", "value": f"```{url_display}```", "inline": False},
+            {"name": "📋 Detalhes do Erro", "value": f"```{error_display}```", "inline": False},
+            {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
+        ]
+    
+    # Verificar se o segredo existe
+    if "general" in st.secrets and webhook_key in st.secrets["general"]:
+        webhook_url = st.secrets["general"][webhook_key]
+    else:
+        return  # Se não tiver webhook configurado, não faz nada
 
     data = {
-        "username": "NexusDL Monitor",
+        "username": username,
         "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
         "embeds": [{
             "title": title,
-            "color": color, 
-            "fields": [
-                {"name": "Origem/URL", "value": video_url, "inline": False},
-                {"name": "Detalhes", "value": f"```{clean_msg}```", "inline": False},
-                {"name": "Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
-            ]
+            "color": color,
+            "thumbnail": {
+                "url": "https://cdn-icons-png.flaticon.com/512/564/564619.png"
+            },
+            "fields": fields,
+            "footer": {
+                "text": "NexusDL Monitor System",
+                "icon_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png"
+            },
+            "timestamp": datetime.now().isoformat()
         }]
     }
     try:
-        requests.post(webhook_url, json=data, timeout=3)
-    except:
-        pass
+        response = requests.post(webhook_url, json=data, timeout=3)
+        if response.status_code != 204:
+            print(f"Erro ao enviar para Discord: {response.status_code}")
+    except Exception as e:
+        print(f"Erro ao enviar para Discord: {e}")
+        pass  # Falha silenciosa no log
 
 # --- FUNÇÃO PARA LIMPAR MENSAGENS DE ERRO ---
 def clean_error_message(error_text):
     text = str(error_text)
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     text = ansi_escape.sub('', text)
+    
+    # Limpar formatações específicas
+    text = re.sub(r'❌\[0;31m', '', text)
+    text = re.sub(r'❌\[0m', '', text)
+    text = re.sub(r'\[0;31m', '', text)
+    text = re.sub(r'\[0m', '', text)
     
     if "not a valid URL" in text or "Unsupported URL" in text:
         return "⚠️ Link inválido. Certifique-se de copiar a URL completa (http/https)."
