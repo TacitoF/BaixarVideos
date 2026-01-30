@@ -3,6 +3,7 @@ import yt_dlp
 import os
 import time
 import re
+import requests # <--- NOVO IMPORT NECESSÁRIO
 from datetime import datetime
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
@@ -12,6 +13,34 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# --- FUNÇÃO LOG DISCORD (NOVA) ---
+def send_discord_log(error_msg, video_url):
+    # Verifica se o segredo existe antes de tentar enviar
+    if "general" in st.secrets and "DISCORD_WEBHOOK" in st.secrets["general"]:
+        webhook_url = st.secrets["general"]["DISCORD_WEBHOOK"]
+    else:
+        return # Se não tiver webhook configurado, não faz nada
+
+    clean_msg = str(error_msg)[:800] # Limita o tamanho da mensagem
+    
+    data = {
+        "username": "NexusDL Monitor",
+        "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png", # Ícone de alerta
+        "embeds": [{
+            "title": "🚨 Falha no Download",
+            "color": 15548997, # Vermelho
+            "fields": [
+                {"name": "URL Alvo", "value": video_url, "inline": False},
+                {"name": "Erro Técnico", "value": f"```{clean_msg}```", "inline": False},
+                {"name": "Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
+            ]
+        }]
+    }
+    try:
+        requests.post(webhook_url, json=data, timeout=3)
+    except:
+        pass # Falha silenciosa no log para não travar o app pro usuário
 
 # --- FUNÇÃO PARA LIMPAR MENSAGENS DE ERRO ---
 def clean_error_message(error_text):
@@ -419,7 +448,9 @@ if os.path.exists("cookies.txt"):
 elif "general" in st.secrets:
     cookie_file = os.path.join(tmp_dir, "cookies.txt")
     with open(cookie_file, "w", encoding="utf-8") as f: 
-        f.write(st.secrets["general"]["COOKIES_DATA"])
+        # Verifica se a chave existe antes de escrever
+        if "COOKIES_DATA" in st.secrets["general"]:
+            f.write(st.secrets["general"]["COOKIES_DATA"])
 else:
     cookie_file = None # Sem cookies
 
@@ -499,7 +530,7 @@ with st.container():
                 status.markdown("Extraindo mídia...")
                 prog.progress(20)
                 
-                # --- CONFIGURAÇÃO CORRIGIDA ---
+                # --- CONFIGURAÇÃO CORRIGIDA & ATUALIZADA ---
                 ydl_opts = {
                     'format': 'best',
                     'outtmpl': output_path,
@@ -527,8 +558,14 @@ with st.container():
                     status.empty(); time.sleep(0.2); prog.empty(); st.rerun()
                 else:
                     status.error("Falha no download. O arquivo não foi gerado."); prog.empty()
+                    # Log de falha silenciosa para o Discord (arquivo vazio)
+                    send_discord_log("Arquivo final tem 0 bytes ou não existe", url)
+
             except Exception as e:
-                # Limpa a mensagem de erro
+                # 1. Envia log para o Discord
+                send_discord_log(e, url)
+                
+                # 2. Exibe erro limpo para o usuário
                 status.error(clean_error_message(e))
                 prog.empty()
 
@@ -543,3 +580,11 @@ with st.container():
             with open(path, "rb") as f:
                 st.download_button("BAIXAR ARQUIVO", f, f"NexusDL_{timestamp}.mp4", "video/mp4")
         st.toast("✅ Pronto!", icon=None)
+    
+    # --- RODAPÉ DE SUPORTE (NOVO) ---
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
+        Precisa de ajuda? <a href="mailto:seu_email@exemplo.com?subject=Suporte%20NexusDL" style="color: rgba(255,255,255,0.6); text-decoration: none;">Reportar problema</a>
+    </div>
+    """, unsafe_allow_html=True)
