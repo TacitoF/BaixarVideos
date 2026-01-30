@@ -13,132 +13,388 @@ st.set_page_config(
 )
 
 # --- CSS REFINADO (ALINHAMENTO E ALTURA) ---
+# --- CSS REFINADO COM DESIGN MODERNO E TECNOLÓGICO ---
 st.markdown("""
     <style>
-    /* 1. BACKGROUND */
+    /* 1. BACKGROUND TECNOLÓGICO E MODERNO */
     .stApp {
-        background: radial-gradient(circle at 50% -20%, #2b2b2b 0%, #000000 80%);
+        background: 
+            radial-gradient(circle at 15% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 85% 30%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+            linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
         background-attachment: fixed;
-        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
     }
     
-    /* 2. CONTAINER */
+    /* Efeito de partículas sutis (apenas visual) */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.03) 0px, transparent 2px),
+            radial-gradient(circle at 60% 10%, rgba(0, 255, 136, 0.03) 0px, transparent 2px),
+            radial-gradient(circle at 90% 40%, rgba(255, 255, 255, 0.02) 0px, transparent 2px);
+        background-size: 400px 400px, 600px 600px, 500px 500px;
+        z-index: -1;
+        pointer-events: none;
+    }
+    
+    /* 2. CONTAINER PRINCIPAL - CENTRALIZADO PERFEITAMENTE */
     .block-container {
-        max-width: 600px;
-        margin: 0 auto;
+        max-width: 600px !important;
+        margin: 0 auto !important;
         padding-top: 15vh !important;
-        padding-bottom: 5rem;
+        padding-bottom: 5rem !important;
         text-align: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
     }
     
-    @media (max-width: 600px) {
+    /* Container com borda sutil e efeito de profundidade */
+    .block-container::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 20px;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.01));
+        -webkit-mask: 
+            linear-gradient(#fff 0 0) content-box, 
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: -1;
+    }
+    
+    /* Responsividade para mobile */
+    @media (max-width: 768px) {
         .block-container { 
             padding-top: 10vh !important; 
-            max-width: 100%;
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            max-width: 100% !important;
+        }
+        
+        h1 {
+            font-size: 2.2rem !important;
+            margin-bottom: 1.5rem !important;
         }
     }
     
-    h1, h2, h3, p, label {
+    @media (max-width: 480px) {
+        .block-container { 
+            padding-top: 8vh !important; 
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        
+        h1 {
+            font-size: 1.9rem !important;
+        }
+    }
+    
+    /* 3. TÍTULO COM GRADIENTE DINÂMICO */
+    h1, h2, h3, p, label, .stMarkdown {
         text-align: center !important;
         color: #e0e0e0 !important;
+        width: 100%;
     }
     
     h1 {
-        background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+        background: linear-gradient(90deg, #FFFFFF 0%, #00d4ff 50%, #00ff88 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 800 !important;
-        margin-bottom: 2rem !important;
-        font-size: 2.5rem !important;
+        background-clip: text;
+        font-weight: 900 !important;
+        margin-bottom: 2.5rem !important;
+        font-size: 2.8rem !important;
+        letter-spacing: -0.5px;
+        position: relative;
+        display: inline-block;
+        padding-bottom: 0.5rem;
     }
-
-    .st-emotion-cache-1629p8f a, a.anchor-link { display: none !important; }
-
-    /* 3. INPUT DE TEXTO (REDUZIDO E CENTRALIZADO) */
+    
+    /* Linha sutil abaixo do título */
+    h1::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 25%;
+        width: 50%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+    }
+    
+    /* Subtítulo */
+    .stMarkdown h3 {
+        color: rgba(255, 255, 255, 0.7) !important;
+        font-weight: 400 !important;
+        font-size: 1.1rem !important;
+        letter-spacing: 1.5px;
+        margin-bottom: 2.5rem !important;
+        text-transform: uppercase;
+    }
+    
+    /* 4. INPUT DE LINK - DESIGN MODERNO */
+    .stTextInput {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 1.5rem auto;
+    }
+    
     .stTextInput input {
-        /* Altura reduzida para 42px (Sensação visual melhor) */
-        height: 42px !important;
-        line-height: 42px !important; 
-        min-height: 42px !important;
+        height: 48px !important;
+        line-height: 48px !important;
+        min-height: 48px !important;
         
-        /* Padding zerado verticalmente para garantir centro exato */
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-        padding-left: 15px !important;
+        padding: 0 20px !important;
+        border-radius: 12px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
         
-        border-radius: 10px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        
         color: white !important;
-        font-size: 14px !important; /* Fonte levemente menor para casar com a altura */
-        backdrop-filter: blur(10px);
+        font-size: 15px !important;
+        font-weight: 400;
         
-        text-align: left !important; 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stTextInput input:hover {
+        border-color: rgba(0, 212, 255, 0.3) !important;
+        box-shadow: 0 6px 25px rgba(0, 212, 255, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    .stTextInput input:focus {
+        border-color: rgba(0, 212, 255, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1), 0 8px 30px rgba(0, 212, 255, 0.2) !important;
+        outline: none;
+        transform: translateY(-2px);
     }
     
     .stTextInput input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
         text-align: center !important;
-        color: rgba(255, 255, 255, 0.5) !important;
-        line-height: 42px !important; /* Garante que o placeholder siga a linha */
+        font-size: 14px !important;
+        letter-spacing: 0.5px;
+        transition: color 0.2s ease;
     }
-
-    .stTextInput > div > div > input:focus {
-        border-color: #666666 !important;
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+    
+    .stTextInput input:focus::placeholder {
+        color: rgba(255, 255, 255, 0.2) !important;
     }
-
-    /* 4. COLUNAS CENTRALIZADAS */
-    div[data-testid="column"] {
+    
+    /* 5. BOTÕES - DESIGN COERENTE E CENTRALIZADO */
+    /* Container de botão centralizado */
+    .button-container {
+        width: 100%;
         display: flex;
         justify-content: center;
-        align-items: center;
+        margin: 0.5rem 0 1.5rem 0;
     }
-
-    /* 5. BOTÃO "VERIFICAR LINK" */
+    
+    /* Botão VERIFICAR LINK */
     .stButton button {
-        width: 100% !important; 
-        height: 40px; /* Levemente menor que o input para hierarquia visual */
+        width: 100% !important;
+        max-width: 280px !important;
+        height: 46px !important;
         
-        background-color: rgba(255, 255, 255, 0.08) !important; 
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 10px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        
         color: #ffffff !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        letter-spacing: 1.2px;
         text-transform: uppercase;
-        font-size: 11px !important;
-        letter-spacing: 1.5px;
-        transition: all 0.3s ease !important;
-        margin-top: 8px !important;
         
-        white-space: nowrap !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .stButton button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.7s ease;
+        z-index: -1;
     }
     
     .stButton button:hover {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        border-color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(0, 212, 255, 0.4) !important;
         transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
     }
-    .stButton button p { color: #ffffff !important; }
-
-    /* 6. BOTÃO DE DOWNLOAD (DESTAQUE) */
-    [data-testid="stDownloadButton"] button {
-        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important;
-        color: #000000 !important;
-        border: none !important;
-        font-weight: 900 !important;
-        height: 45px !important;
-    }
-    [data-testid="stDownloadButton"] button p { color: #000000 !important; }
-
-    /* ANIMAÇÃO */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .stTextInput, .stButton, .stInfo, .stAlert { animation: fadeIn 0.6s ease-out forwards; }
     
-    #MainMenu, footer, header {visibility: hidden;}
+    .stButton button:hover::before {
+        left: 100%;
+    }
+    
+    .stButton button:active {
+        transform: translateY(0);
+        transition: transform 0.1s ease;
+    }
+    
+    /* 6. BOTÃO DE DOWNLOAD (DESTAQUE TECNOLÓGICO) */
+    [data-testid="stDownloadButton"] button {
+        width: 100% !important;
+        max-width: 280px !important;
+        height: 52px !important;
+        
+        background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important;
+        background-size: 200% 100% !important;
+        
+        border: none !important;
+        border-radius: 12px !important;
+        
+        color: #000000 !important;
+        font-weight: 900 !important;
+        font-size: 13px !important;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 6px 20px rgba(0, 255, 136, 0.25);
+        
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    [data-testid="stDownloadButton"] button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.7s ease;
+        z-index: -1;
+    }
+    
+    [data-testid="stDownloadButton"] button:hover {
+        background-position: 100% 0 !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 255, 136, 0.35), 0 0 20px rgba(0, 212, 255, 0.2);
+    }
+    
+    [data-testid="stDownloadButton"] button:hover::before {
+        left: 100%;
+    }
+    
+    [data-testid="stDownloadButton"] button p {
+        color: #000000 !important;
+        font-weight: 900 !important;
+        margin: 0;
+    }
+    
+    /* 7. ELEMENTOS DE STATUS E INFO */
+    .stAlert, .stInfo, .stSuccess, .stWarning, .stError {
+        border-radius: 12px !important;
+        border-left: none !important;
+        margin: 0.5rem auto 1rem auto !important;
+        max-width: 500px !important;
+        text-align: center !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    /* 8. VIDEO PLAYER */
+    .stVideo {
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        margin: 1.5rem auto !important;
+        max-width: 500px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* 9. NUMBER INPUT (PARA STORIES) */
+    .stNumberInput input {
+        height: 46px !important;
+        border-radius: 12px !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        text-align: center !important;
+        font-weight: 600 !important;
+    }
+    
+    /* 10. ANIMAÇÕES SUAVES */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes glowPulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+    
+    .stTextInput, .stButton, .stAlert, .stInfo, .stVideo, .stNumberInput {
+        animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    
+    .stButton button {
+        animation: fadeInUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    
+    /* 11. EFEITO DE BRILHO SUTIL NO CONTAINER */
+    .block-container {
+        animation: glowPulse 8s ease-in-out infinite;
+    }
+    
+    /* 12. OCULTAR ELEMENTOS DO STREAMLIT */
+    #MainMenu, footer, header, .stDeployButton {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    
+    /* 13. SCROLLBAR PERSONALIZADA */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #00ff88 0%, #00d4ff 100%);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #00ff88 0%, #00aaff 100%);
+    }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # --- FUNÇÃO AUXILIAR ---
 def get_stories_count(url, cookie_file):
