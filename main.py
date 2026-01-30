@@ -2,6 +2,7 @@ import streamlit as st
 import yt_dlp
 import os
 import time
+from datetime import datetime # Importação necessária para o nome único
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -11,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS AVANÇADO (DESIGN SYSTEM "NEXUS" + CENTRALIZAÇÃO TOTAL) ---
+# --- CSS AVANÇADO (DESIGN SYSTEM "NEXUS" + CENTRALIZAÇÃO) ---
 st.markdown("""
     <style>
     /* 1. BACKGROUND GRADIENTE PROFUNDO */
@@ -21,23 +22,20 @@ st.markdown("""
         font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     
-    /* 2. CENTRALIZAÇÃO FORÇADA (PC E MOBILE) */
-    /* Centraliza o bloco principal de conteúdo */
+    /* 2. CENTRALIZAÇÃO FORÇADA */
     .block-container {
         max-width: 700px;
         padding-top: 2rem;
         padding-bottom: 2rem;
-        text-align: center !important; /* Força alinhamento de texto */
+        text-align: center !important;
         margin: 0 auto;
     }
     
-    /* Centraliza Títulos e Textos */
     h1, h2, h3, p, .stMarkdown, label {
         text-align: center !important;
         color: #e0e0e0 !important;
     }
     
-    /* Título com Gradiente */
     h1 {
         background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
         -webkit-background-clip: text;
@@ -49,21 +47,16 @@ st.markdown("""
     /* Remove links âncora */
     .st-emotion-cache-1629p8f a, a.anchor-link { display: none !important; }
 
-    /* 3. INPUTS ESTILO "GLASS" (VIDRO ESCURO) */
-    .stTextInput > div {
-        display: flex;
-        justify-content: center;
-    }
-    .stTextInput > div > div {
-        width: 100%;
-    }
+    /* 3. INPUTS ESTILO "GLASS" */
+    .stTextInput > div { display: flex; justify-content: center; }
+    .stTextInput > div > div { width: 100%; }
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 12px !important;
         padding: 15px !important;
-        text-align: center; /* Texto digitado no centro (opcional, remova se preferir esquerda) */
+        text-align: center;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
     }
@@ -73,28 +66,22 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.08) !important;
     }
     
-    /* Botões Pequenos (Lupa e +/-) */
     div[data-testid="column"] button, .stNumberInput input {
         background-color: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: #e0e0e0 !important;
         border-radius: 12px !important;
-        width: 100%; /* Garante largura total no mobile */
+        width: 100%;
     }
     
-    /* Alinhamento Vertical das Colunas (Lupa e Input na mesma linha) */
     div[data-testid="column"] {
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-    /* 4. BOTÃO DE AÇÃO (INTERATIVO) */
-    .stButton {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-    }
+    /* 4. BOTÕES */
+    .stButton { display: flex; justify-content: center; width: 100%; }
     .stButton > button {
         width: 100%;
         background-color: #ffffff !important;
@@ -116,11 +103,8 @@ st.markdown("""
     }
     .stButton > button p { color: #000000 !important; }
 
-    /* 5. BOTÃO DE DOWNLOAD FINAL (CYBER GREEN) */
-    [data-testid="stDownloadButton"] {
-        display: flex;
-        justify-content: center;
-    }
+    /* 5. DOWNLOAD BUTTON */
+    [data-testid="stDownloadButton"] { display: flex; justify-content: center; }
     [data-testid="stDownloadButton"] > button {
         width: 100% !important;
         background: linear-gradient(90deg, #00ff88 0%, #00d4ff 100%) !important;
@@ -138,7 +122,7 @@ st.markdown("""
     }
     [data-testid="stDownloadButton"] > button p { color: #000000 !important; }
 
-    /* 6. ANIMAÇÃO DE ENTRADA */
+    /* ANIMAÇÃO */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -147,7 +131,6 @@ st.markdown("""
         animation: fadeIn 0.6s ease-out forwards;
     }
     
-    /* Esconde menu padrão */
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
@@ -190,7 +173,6 @@ if 'last_url' not in st.session_state:
 
 # --- INTERFACE ---
 with st.container():
-    # Ajuste de proporção para ficar melhor centralizado no mobile
     col_input, col_btn = st.columns([5, 1])
     
     with col_input:
@@ -204,7 +186,6 @@ with st.container():
     with col_btn:
         check_click = st.button("🔎", help="Verificar link")
 
-    # --- LÓGICA DE DETECÇÃO ---
     if url != st.session_state.last_url or check_click:
         keys = ['current_video_path', 'download_success', 'story_count_cache']
         for k in keys:
@@ -219,7 +200,6 @@ with st.container():
     status_msg = None
 
     if url:
-        # 1. Instagram Story
         if "instagram.com/stories/" in url:
             is_story = True
             if 'story_count_cache' not in st.session_state:
@@ -239,7 +219,6 @@ with st.container():
             else:
                 st.error("Stories indisponíveis.")
 
-        # 2. Identificação de Plataforma
         elif "instagram.com" in url:
             st.info("Instagram Reels/Post identificado")
         elif "x.com" in url or "twitter.com" in url:
@@ -250,7 +229,6 @@ with st.container():
             st.error("YouTube não suportado.")
             button_label = None
 
-        # --- BOTÃO DE AÇÃO ---
         if button_label and st.button(button_label):
             if is_story and max_stories == 0:
                 st.error("Erro na seleção.")
@@ -298,11 +276,15 @@ with st.container():
                     status.error(f"Erro: {e}")
                     prog.empty()
 
-    # --- EXIBIÇÃO FINAL ---
+    # --- EXIBIÇÃO FINAL COM NOME ÚNICO ---
     if 'download_success' in st.session_state and st.session_state['download_success']:
         path = st.session_state['current_video_path']
         
         st.video(path)
+        
+        # Gera nome único: NexusDL_20231025_143022.mp4
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_filename = f"NexusDL_{timestamp}.mp4"
         
         col_dl, col_info = st.columns([1, 1])
         with col_dl:
@@ -310,7 +292,7 @@ with st.container():
                 st.download_button(
                     label="BAIXAR ARQUIVO", 
                     data=f, 
-                    file_name="NexusDL_Video.mp4", 
+                    file_name=unique_filename, # Nome dinâmico aqui
                     mime="video/mp4"
                 )
         
