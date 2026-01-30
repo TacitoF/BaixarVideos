@@ -429,7 +429,7 @@ def get_stories_count(url, c_file):
     try:
         ydl_opts = {
             'quiet': True, 'extract_flat': True, 'cookiefile': c_file, 'no_warnings': True,
-            'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -499,22 +499,23 @@ with st.container():
                 status.markdown("Extraindo mídia...")
                 prog.progress(20)
                 
-                # --- CONFIGURAÇÃO HÍBRIDA (SOLUÇÃO BYPASS) ---
+                # --- CONFIGURAÇÃO CORRIGIDA ---
                 ydl_opts = {
                     'format': 'best',
                     'outtmpl': output_path,
-                    # POR PADRÃO: SEM COOKIES (Para evitar bloqueio em Reels/TikTok)
-                    # O cookiefile NÃO entra aqui por padrão
                     'nocheckcertificate': True,
                     'quiet': True,
                     'no_warnings': True,
-                    # User-Agent de celular Android (ajuda no bypass)
-                    'user_agent': 'Instagram 219.0.0.12.117 Android (31/12; 320dpi; 720x1280; samsung; SM-A105F; a105; exynos7884; en_US; 348272816)',
+                    # User-Agent de Desktop para simular navegador comum (melhor para IPs de datacenter)
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 }
                 
-                # Se for Story, OBRIGA o uso de Cookies (Login necessário)
-                if is_story:
+                # APLICA COOKIES SEMPRE (Reels, Posts e Stories)
+                if cookie_file:
                     ydl_opts['cookiefile'] = cookie_file
+
+                # Configuração extra apenas se for Story
+                if is_story:
                     ydl_opts['playlist_items'] = str(story_index)
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
