@@ -5,6 +5,7 @@ import time
 import re
 import requests
 from datetime import datetime
+from urllib.parse import urlparse
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -13,6 +14,16 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# --- FUNÇÃO PARA VERIFICAR SE É LINK DO YOUTUBE ---
+def is_youtube_url(url):
+    """Verifica se a URL é do YouTube"""
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc.lower()
+        return any(youtube_domain in domain for youtube_domain in ['youtube.com', 'youtu.be', 'www.youtube.com'])
+    except:
+        return False
 
 # --- FUNÇÃO LOG DISCORD (ATUALIZADA COM FORMATAÇÃO MELHOR) ---
 def send_discord_log(error_msg, video_url):
@@ -107,7 +118,7 @@ def send_discord_log(error_msg, video_url):
         pass  # Falha silenciosa no log
 
 # --- FUNÇÃO PARA LIMPAR MENSAGENS DE ERRO ---
-def clean_error_message(error_text):
+def clean_error_message(error_text, url=""):
     text = str(error_text)
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     text = ansi_escape.sub('', text)
@@ -117,6 +128,11 @@ def clean_error_message(error_text):
     text = re.sub(r'❌\[0m', '', text)
     text = re.sub(r'\[0;31m', '', text)
     text = re.sub(r'\[0m', '', text)
+    
+    # VERIFICAÇÃO ESPECÍFICA PARA YOUTUBE - Traduzir mensagem de erro 403
+    if "youtube.com" in url or "youtu.be" in url:
+        if "HTTP Error 403" in text or "Forbidden" in text:
+            return "🚫 Não é possível baixar vídeos do YouTube no momento. Tente novamente mais tarde."
     
     if "not a valid URL" in text or "Unsupported URL" in text:
         return "⚠️ Link inválido. Certifique-se de copiar a URL completa."
@@ -228,6 +244,13 @@ with st.container():
         # Resetar a flag
         if 'url_submitted' in st.session_state:
             st.session_state.url_submitted = False
+        
+        # VERIFICAÇÃO IMEDIATA PARA YOUTUBE
+        if is_youtube_url(url):
+            st.error("🚫 Não é possível baixar vídeos do YouTube na plataforma.")
+            # Registrar o erro no Discord
+            send_discord_log("Tentativa de download do YouTube bloqueada - URL identificada", url)
+            st.stop()  # Para a execução aqui
             
         is_story = "instagram.com/stories/" in url
         
@@ -295,7 +318,7 @@ with st.container():
 
             except Exception as e:
                 send_discord_log(e, url)
-                status.error(clean_error_message(e))
+                status.error(clean_error_message(e, url))  # Passando a URL como parâmetro
                 prog.empty()
 
     if st.session_state.get('download_success'):
