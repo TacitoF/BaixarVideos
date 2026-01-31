@@ -250,76 +250,75 @@ with st.container():
             st.error("🚫 Não é possível baixar vídeos do YouTube na plataforma.")
             # Registrar o erro no Discord
             send_discord_log("Tentativa de download do YouTube bloqueada - URL identificada", url)
-            st.stop()  # Para a execução aqui
-            
-        is_story = "instagram.com/stories/" in url
-        
-        if is_story:
-            if 'story_count_cache' not in st.session_state:
-                with st.spinner("Conectando ao Nexus..."):
-                    st.session_state['story_count_cache'] = get_stories_count(url, cookie_file)
-            
-            if 'story_count_cache' in st.session_state:
-                max_stories = st.session_state['story_count_cache']
-                if max_stories > 0:
-                    st.info(f"📸 {max_stories} Stories disponíveis")
-                    
-                    # Número de story centralizado
-                    col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
-                    with col_s2:
-                        story_index = st.number_input("Nº", 1, max_stories, 1, label_visibility="collapsed")
-                    
-                    # Botão BAIXAR STORY centralizado
-                    col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
-                    with col_b2:
-                        if st.button(f"BAIXAR STORY {story_index}", use_container_width=True):
-                            download_now = True
-                else:
-                    st.error("Stories indisponíveis (Login necessário).")
-        
         else:
-            download_now = True
-            story_index = 0
-
-        if download_now:
-            output_path = os.path.join(tmp_dir, f"download_{int(time.time())}.mp4")
-            if os.path.exists(output_path): os.remove(output_path)
+            is_story = "instagram.com/stories/" in url
             
-            status = st.empty(); prog = st.progress(0)
-            try:
-                status.markdown("Extraindo mídia...")
-                prog.progress(20)
+            if is_story:
+                if 'story_count_cache' not in st.session_state:
+                    with st.spinner("Conectando ao Nexus..."):
+                        st.session_state['story_count_cache'] = get_stories_count(url, cookie_file)
                 
-                ydl_opts = {
-                    'format': 'best',
-                    'outtmpl': output_path,
-                    'nocheckcertificate': True,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                }
-                
-                if cookie_file:
-                    ydl_opts['cookiefile'] = cookie_file
+                if 'story_count_cache' in st.session_state:
+                    max_stories = st.session_state['story_count_cache']
+                    if max_stories > 0:
+                        st.info(f"📸 {max_stories} Stories disponíveis")
+                        
+                        # Número de story centralizado
+                        col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
+                        with col_s2:
+                            story_index = st.number_input("Nº", 1, max_stories, 1, label_visibility="collapsed")
+                        
+                        # Botão BAIXAR STORY centralizado
+                        col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
+                        with col_b2:
+                            if st.button(f"BAIXAR STORY {story_index}", use_container_width=True):
+                                download_now = True
+                    else:
+                        st.error("Stories indisponíveis (Login necessário).")
+            
+            else:
+                download_now = True
+                story_index = 0
 
-                if is_story:
-                    ydl_opts['playlist_items'] = str(story_index)
+            if download_now:
+                output_path = os.path.join(tmp_dir, f"download_{int(time.time())}.mp4")
+                if os.path.exists(output_path): os.remove(output_path)
                 
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-                prog.progress(100)
-                
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                    st.session_state['current_video_path'] = output_path
-                    st.session_state['download_success'] = True
-                    status.empty(); time.sleep(0.2); prog.empty(); st.rerun()
-                else:
-                    status.error("Falha no download. O arquivo não foi gerado."); prog.empty()
-                    send_discord_log("Arquivo final tem 0 bytes ou não existe", url)
+                status = st.empty(); prog = st.progress(0)
+                try:
+                    status.markdown("Extraindo mídia...")
+                    prog.progress(20)
+                    
+                    ydl_opts = {
+                        'format': 'best',
+                        'outtmpl': output_path,
+                        'nocheckcertificate': True,
+                        'quiet': True,
+                        'no_warnings': True,
+                        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    }
+                    
+                    if cookie_file:
+                        ydl_opts['cookiefile'] = cookie_file
 
-            except Exception as e:
-                send_discord_log(e, url)
-                status.error(clean_error_message(e, url))  # Passando a URL como parâmetro
-                prog.empty()
+                    if is_story:
+                        ydl_opts['playlist_items'] = str(story_index)
+                    
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
+                    prog.progress(100)
+                    
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                        st.session_state['current_video_path'] = output_path
+                        st.session_state['download_success'] = True
+                        status.empty(); time.sleep(0.2); prog.empty(); st.rerun()
+                    else:
+                        status.error("Falha no download. O arquivo não foi gerado."); prog.empty()
+                        send_discord_log("Arquivo final tem 0 bytes ou não existe", url)
+
+                except Exception as e:
+                    send_discord_log(e, url)
+                    status.error(clean_error_message(e, url))  # Passando a URL como parâmetro
+                    prog.empty()
 
     if st.session_state.get('download_success'):
         path = st.session_state['current_video_path']
