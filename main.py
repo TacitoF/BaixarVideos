@@ -7,12 +7,16 @@ import requests
 import streamlit as st
 import yt_dlp
 
+<<<<<<< HEAD
 st.set_page_config(
     page_title="NexusDL",
     page_icon="⚫",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
+=======
+st.set_page_config(page_title="NexusDL", page_icon="⚫", layout="centered", initial_sidebar_state="collapsed")
+>>>>>>> 4f858d30f69446455049d22a3d03653a2cbec92b
 
 
 def is_youtube_url(url):
