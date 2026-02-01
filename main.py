@@ -7,11 +7,9 @@ import requests
 import streamlit as st
 import yt_dlp
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="NexusDL", page_icon="⚫", layout="centered", initial_sidebar_state="collapsed")
 
 
-# --- FUNÇÕES DE VERIFICAÇÃO E AUXÍLIO ---
 def is_youtube_url(url):
     """Verifica se a URL é do YouTube"""
     try:
