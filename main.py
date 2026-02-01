@@ -1,378 +1,289 @@
-import streamlit as st
-import yt_dlp
 import os
 import time
-import re
-import requests
 from datetime import datetime
 from urllib.parse import urlparse
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(
-    page_title="NexusDL",
-    page_icon="⚫",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+import requests
+import streamlit as st
+import yt_dlp
 
-# --- FUNÇÃO PARA VERIFICAR SE É LINK DO YOUTUBE ---
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="NexusDL", page_icon="⚫", layout="centered", initial_sidebar_state="collapsed")
+
+
+# --- FUNÇÕES DE VERIFICAÇÃO E AUXÍLIO ---
 def is_youtube_url(url):
     """Verifica se a URL é do YouTube"""
     try:
         parsed_url = urlparse(url)
         domain = parsed_url.netloc.lower()
-        return any(youtube_domain in domain for youtube_domain in ['youtube.com', 'youtu.be', 'www.youtube.com'])
+        return any(
+            youtube_domain in domain
+            for youtube_domain in ["youtube.com", "youtu.be", "www.youtube.com", "m.youtube.com"]
+        )
     except:
         return False
 
-# --- FUNÇÃO LOG DISCORD (ATUALIZADA COM FORMATAÇÃO MELHOR) ---
+
+def process_youtube_download_api(video_url, format_res):
+    """Lógica de download via API externa para YouTube com chave via Secrets"""
+
+    try:
+        api_key = st.secrets["general"]["YOUTUBE_API_KEY"]
+    except KeyError:
+        st.error("Erro: Chave 'YOUTUBE_API_KEY' não encontrada nos Secrets.")
+        return None
+
+    init_url = f"https://p.savenow.to/ajax/download.php?format={format_res}&url={video_url}&apikey={api_key}"
+
+    try:
+        response = requests.get(init_url)
+        response.raise_for_status()
+        data = response.json()
+        job_id = data.get("id")
+
+        if not job_id:
+            return None
+
+        status_placeholder = st.empty()
+        progress_bar = st.progress(0)
+
+        while True:
+            time.sleep(1.5)
+            progress_endpoint = f"https://p.savenow.to/ajax/progress?id={job_id}"
+
+            p_resp = requests.get(progress_endpoint)
+            p_data = p_resp.json()
+
+            curr = int(p_data.get("progress", 0))
+            norm = min(max(curr / 1000, 0.0), 1.0)
+
+            progress_bar.progress(norm)
+            status_placeholder.markdown(
+                f"<p style='text-align:center'>Processando no Servidor Nexus: {norm * 100:.1f}%</p>",
+                unsafe_allow_html=True,
+            )
+
+            if curr == 1000:
+                final_url = p_data.get("download_url")
+                status_placeholder.empty()
+                progress_bar.empty()
+                return final_url
+
+            if p_data.get("status") == "error":
+                status_placeholder.empty()
+                progress_bar.empty()
+                return None
+
+    except Exception:
+        return None
+
+
 def send_discord_log(error_msg, video_url):
     clean_msg = str(error_msg)[:800]
-    
-    # Determinar se é feedback baseado no conteúdo
     is_feedback = "FEEDBACK" in str(video_url) or "REPORT" in str(video_url) or "feedback" in str(error_msg).lower()
-    
-    # Escolher o webhook correto baseado no tipo
+
     if is_feedback:
         webhook_key = "DISCORD_WEBHOOK_FEEDBACK"
-        color = 3447003  # Azul para feedback
+        color = 3447003
         username = "NexusDL Feedback"
-        
-        # Processar mensagem de feedback
-        if "**Contato:**" in clean_msg and "**Relato:**" in clean_msg:
-            # Extrair contato e relato do feedback
-            parts = clean_msg.split("**Contato:**")[1].split("**Relato:**")
-            contato = parts[0].strip() if len(parts) > 0 else "Não informado"
-            relato = parts[1].strip() if len(parts) > 1 else clean_msg
-            
-            if contato == " " or contato == "":
-                contato = "Não informado"
-            
-            title = "📢 NOVO FEEDBACK"
-            fields = [
-                {"name": "📧 Contato", "value": f"```{contato}```", "inline": False},
-                {"name": "📝 Relato", "value": f"```{relato[:1000]}```", "inline": False},
-                {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
-            ]
-        else:
-            title = "📢 NOVO FEEDBACK"
-            fields = [
-                {"name": "📝 Mensagem", "value": f"```{clean_msg}```", "inline": False},
-                {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
-            ]
+        title = "📢 NOVO FEEDBACK"
+        fields = [{"name": "📝 Mensagem", "value": f"```{clean_msg}```", "inline": False}]
     else:
         webhook_key = "DISCORD_WEBHOOK_ERROR"
-        color = 15548997  # Vermelho para erro
+        color = 15548997
         username = "NexusDL Monitor"
-        
-        # Limpar a mensagem de erro
-        error_display = clean_msg
-        # Remover códigos ANSI e formatação estranha
-        error_display = re.sub(r'❌\[0;31m', '', error_display)
-        error_display = re.sub(r'❌\[0m', '', error_display)
-        error_display = re.sub(r'\[0;31m', '', error_display)
-        error_display = re.sub(r'\[0m', '', error_display)
-        error_display = re.sub(r'ERROR:', 'ERRO:', error_display)
-        
-        # Formatar URL para exibição
-        url_display = str(video_url)[:200]
-        if len(str(video_url)) > 200:
-            url_display = url_display + "..."
-        
         title = "🚨 FALHA NO DOWNLOAD"
         fields = [
-            {"name": "🔗 URL", "value": f"```{url_display}```", "inline": False},
-            {"name": "📋 Detalhes do Erro", "value": f"```{error_display}```", "inline": False},
-            {"name": "🕐 Horário", "value": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "inline": True}
+            {"name": "🔗 URL", "value": f"```{str(video_url)[:200]}```", "inline": False},
+            {"name": "📋 Detalhes", "value": f"```{clean_msg}```", "inline": False},
         ]
-    
-    # Verificar se o segredo existe
+
     if "general" in st.secrets and webhook_key in st.secrets["general"]:
         webhook_url = st.secrets["general"][webhook_key]
-    else:
-        return  # Se não tiver webhook configurado, não faz nada
+        data = {
+            "username": username,
+            "embeds": [{"title": title, "color": color, "fields": fields, "timestamp": datetime.now().isoformat()}],
+        }
+        try:
+            requests.post(webhook_url, json=data, timeout=3)
+        except:
+            pass
 
-    data = {
-        "username": username,
-        "avatar_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
-        "embeds": [{
-            "title": title,
-            "color": color,
-            "thumbnail": {
-                "url": "https://cdn-icons-png.flaticon.com/512/564/564619.png"
-            },
-            "fields": fields,
-            "footer": {
-                "text": "NexusDL Monitor System",
-                "icon_url": "https://cdn-icons-png.flaticon.com/512/564/564619.png"
-            },
-            "timestamp": datetime.now().isoformat()
-        }]
-    }
-    try:
-        response = requests.post(webhook_url, json=data, timeout=3)
-        if response.status_code != 204:
-            print(f"Erro ao enviar para Discord: {response.status_code}")
-    except Exception as e:
-        print(f"Erro ao enviar para Discord: {e}")
-        pass  # Falha silenciosa no log
 
-# --- FUNÇÃO PARA LIMPAR MENSAGENS DE ERRO ---
 def clean_error_message(error_text, url=""):
     text = str(error_text)
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    text = ansi_escape.sub('', text)
-    
-    # Limpar formatações específicas
-    text = re.sub(r'❌\[0;31m', '', text)
-    text = re.sub(r'❌\[0m', '', text)
-    text = re.sub(r'\[0;31m', '', text)
-    text = re.sub(r'\[0m', '', text)
-    
-    # VERIFICAÇÃO ESPECÍFICA PARA YOUTUBE - Traduzir mensagem de erro 403
-    if "youtube.com" in url or "youtu.be" in url:
-        if "HTTP Error 403" in text or "Forbidden" in text:
-            return "🚫 Não é possível baixar vídeos do YouTube no momento. Tente novamente mais tarde."
-    
     if "not a valid URL" in text or "Unsupported URL" in text:
         return "⚠️ Link inválido. Certifique-se de copiar a URL completa."
-        
     if "HTTP Error 400" in text:
-        return "⚠️ Conexão recusada (Erro 400). O Instagram bloqueou a conexão anônima ou os cookies expiraram."
-    if "Sign in to confirm" in text or "login" in text.lower():
-        return "🔒 Conteúdo exige login (Cookies necessários)."
+        return "⚠️ Erro 400: O Instagram bloqueou a conexão ou os cookies expiraram."
     if "Video unavailable" in text:
         return "🚫 Vídeo não encontrado ou excluído."
-    if "Private video" in text:
-        return "🔒 Este vídeo é privado."
-        
-    return f"Erro técnico: {text[:200]}..."
+    return f"Erro técnico: {text[:100]}..."
 
-# --- CARREGAR CSS E JS ---
-def load_css():
-    try:
-        with open("style.css", "r", encoding="utf-8") as f:
-            css = f.read()
-            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        # CSS padrão como fallback
-        st.markdown("""
-        <style>
-        .stApp { background: #0a0a0a; }
-        </style>
-        """, unsafe_allow_html=True)
 
-def load_js():
-    try:
-        with open("script.js", "r", encoding="utf-8") as f:
-            js = f.read()
-            st.markdown(f"<script>{js}</script>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        # JavaScript padrão como fallback
-        st.markdown("""
-        <script>
-        console.log("JS não carregado");
-        </script>
-        """, unsafe_allow_html=True)
+try:
+    with open("style.css", "r", encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except:
+    pass
 
-# --- CARREGAR ESTILOS E SCRIPTS ---
-load_css()
-load_js()
-
-# --- INÍCIO DO APP ---
 st.title("NexusDL")
-st.markdown("Insta • TikTok • X (Twitter)", help="Cole o link abaixo.")
+st.markdown("YouTube • Insta • TikTok • X", help="Cole o link abaixo.")
 
-# --- GERENCIAMENTO DE COOKIES ---
 tmp_dir = "/tmp"
-if not os.path.exists(tmp_dir): os.makedirs(tmp_dir)
+if not os.path.exists(tmp_dir):
+    os.makedirs(tmp_dir)
 
+cookie_file = None
 if os.path.exists("cookies.txt"):
     cookie_file = "cookies.txt"
-elif "general" in st.secrets:
+elif "general" in st.secrets and "COOKIES_DATA" in st.secrets["general"]:
     cookie_file = os.path.join(tmp_dir, "cookies.txt")
-    with open(cookie_file, "w", encoding="utf-8") as f: 
-        if "COOKIES_DATA" in st.secrets["general"]:
-            f.write(st.secrets["general"]["COOKIES_DATA"])
-else:
-    cookie_file = None
+    with open(cookie_file, "w", encoding="utf-8") as f:
+        f.write(st.secrets["general"]["COOKIES_DATA"])
 
-# --- FUNÇÃO AUXILIAR ---
+
 def get_stories_count(url, c_file):
-    if not c_file: return 0
     try:
-        ydl_opts = {
-            'quiet': True, 'extract_flat': True, 'cookiefile': c_file, 'no_warnings': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        }
+        ydl_opts = {"quiet": True, "extract_flat": True, "cookiefile": c_file}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            if 'entries' in info: return len(list(info['entries']))
-            return 1
-    except: return 0
+            return len(list(info["entries"])) if "entries" in info else 1
+    except:
+        return 0
 
-if 'last_url' not in st.session_state: st.session_state.last_url = ""
 
-# --- INTERFACE ---
+if "last_url" not in st.session_state:
+    st.session_state.last_url = ""
+if "link_verificado" not in st.session_state:
+    st.session_state.link_verificado = False
+
 with st.container():
-    # Criar um formulário para a URL para suporte nativo a Enter
     with st.form(key="url_form"):
-        url = st.text_input("Link", placeholder="Cole o link da mídia aqui...", label_visibility="collapsed", key="url_input")
-        
-        # Botão VERIFICAR LINK centralizado
+        url_input = st.text_input("Link", placeholder="Cole o link da mídia aqui...", label_visibility="collapsed")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            check_click = st.form_submit_button("VERIFICAR LINK", help="Clique para processar (ou pressione Enter)", use_container_width=True)
-    
-    # Usar a flag de submit do formulário
+            check_click = st.form_submit_button("VERIFICAR LINK", use_container_width=True)
+
+    if url_input != st.session_state.last_url:
+        st.session_state.link_verificado = False
+        st.session_state.last_url = url_input
+        for k in ["current_video_path", "download_success", "story_count_cache"]:
+            if k in st.session_state:
+                del st.session_state[k]
+
     if check_click:
-        # Quando o formulário é submetido, tratamos como se o botão foi clicado
-        st.session_state.url_submitted = True
-    else:
-        if 'url_submitted' in st.session_state:
-            # Resetar a flag após processamento
-            st.session_state.url_submitted = False
+        st.session_state.link_verificado = True
 
-    if url != st.session_state.last_url:
-        for k in ['current_video_path', 'download_success', 'story_count_cache', 'story_processed']:
-            if k in st.session_state: del st.session_state[k]
-        st.session_state.last_url = url
-
-    download_now = False
-    
-    if url and (check_click or st.session_state.get('url_submitted', False)):
-        # Resetar a flag
-        if 'url_submitted' in st.session_state:
-            st.session_state.url_submitted = False
-        
-        # VERIFICAÇÃO IMEDIATA PARA YOUTUBE
-        if is_youtube_url(url):
-            st.error("🚫 Não é possível baixar vídeos do YouTube na plataforma.")
-            # Registrar o erro no Discord
-            send_discord_log("Tentativa de download do YouTube bloqueada - URL identificada", url)
-        else:
-            is_story = "instagram.com/stories/" in url
-            
-            if is_story:
-                if 'story_count_cache' not in st.session_state:
+    if url_input and st.session_state.link_verificado:
+        # CASO 1: YOUTUBE
+        if is_youtube_url(url_input):
+            st.info("📺 YouTube detectado.")
+            formats = ["360", "480", "720", "1080"]
+            col_yt1, col_yt2, col_yt3 = st.columns([1, 2, 1])
+            with col_yt2:
+                selected_res = st.selectbox("Resolução:", [f"{f}p" for f in formats], key="yt_res")
+                if st.button("GERAR DOWNLOAD", use_container_width=True):
+                    res_val = selected_res.replace("p", "")
                     with st.spinner("Conectando ao Nexus..."):
-                        st.session_state['story_count_cache'] = get_stories_count(url, cookie_file)
-                
-                if 'story_count_cache' in st.session_state:
-                    max_stories = st.session_state['story_count_cache']
-                    if max_stories > 0:
-                        st.info(f"📸 {max_stories} Stories disponíveis")
-                        
-                        # Número de story centralizado
-                        col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
-                        with col_s2:
-                            story_index = st.number_input("Nº", 1, max_stories, 1, label_visibility="collapsed")
-                        
-                        # Botão BAIXAR STORY centralizado
-                        col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
-                        with col_b2:
-                            if st.button(f"BAIXAR STORY {story_index}", use_container_width=True):
-                                download_now = True
+                        final_link = process_youtube_download_api(url_input, res_val)
+                    if final_link:
+                        st.success("✅ Link pronto!")
+                        st.link_button("BAIXAR MP4", final_link, type="primary", use_container_width=True)
                     else:
-                        st.error("Stories indisponíveis (Login necessário).")
-            
+                        st.error("Erro ao processar. Tente outra resolução.")
+
+        # CASO 2: OUTRAS REDES
+        else:
+            download_now = False
+            is_story = "instagram.com/stories/" in url_input
+
+            if is_story:
+                if "story_count_cache" not in st.session_state:
+                    with st.spinner("Lendo Stories..."):
+                        st.session_state["story_count_cache"] = get_stories_count(url_input, cookie_file)
+
+                max_stories = st.session_state.get("story_count_cache", 0)
+                if max_stories > 0:
+                    st.info(f"📸 {max_stories} Stories encontrados")
+                    col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
+                    with col_s2:
+                        story_idx = st.number_input("Nº", 1, max_stories, 1)
+                        if st.button(f"BAIXAR STORY {story_idx}", use_container_width=True):
+                            download_now = True
+                else:
+                    st.error("Stories indisponíveis.")
             else:
-                download_now = True
-                story_index = 0
+                col_bt1, col_bt2, col_bt3 = st.columns([1, 2, 1])
+                with col_bt2:
+                    if st.button("PROCESSAR VÍDEO", use_container_width=True):
+                        download_now = True
+                story_idx = 0
 
             if download_now:
-                output_path = os.path.join(tmp_dir, f"download_{int(time.time())}.mp4")
-                if os.path.exists(output_path): os.remove(output_path)
-                
-                status = st.empty(); prog = st.progress(0)
+                output_path = os.path.join(tmp_dir, f"nexus_{int(time.time())}.mp4")
+                status = st.empty()
+                prog = st.progress(0)
                 try:
                     status.markdown("Extraindo mídia...")
-                    prog.progress(20)
-                    
-                    ydl_opts = {
-                        'format': 'best',
-                        'outtmpl': output_path,
-                        'nocheckcertificate': True,
-                        'quiet': True,
-                        'no_warnings': True,
-                        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    prog.progress(30)
+                    opts = {
+                        "format": "best",
+                        "outtmpl": output_path,
+                        "quiet": True,
+                        "no_warnings": True,
+                        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124 Safari/537.36",
                     }
-                    
                     if cookie_file:
-                        ydl_opts['cookiefile'] = cookie_file
-
+                        opts["cookiefile"] = cookie_file
                     if is_story:
-                        ydl_opts['playlist_items'] = str(story_index)
-                    
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl: ydl.download([url])
-                    prog.progress(100)
-                    
-                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                        st.session_state['current_video_path'] = output_path
-                        st.session_state['download_success'] = True
-                        status.empty(); time.sleep(0.2); prog.empty(); st.rerun()
-                    else:
-                        status.error("Falha no download. O arquivo não foi gerado."); prog.empty()
-                        send_discord_log("Arquivo final tem 0 bytes ou não existe", url)
+                        opts["playlist_items"] = str(story_idx)
 
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        ydl.download([url_input])
+
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                        st.session_state["current_video_path"] = output_path
+                        st.session_state["download_success"] = True
+                        status.empty()
+                        prog.empty()
+                        st.rerun()
+                    else:
+                        status.error("Falha ao gerar arquivo.")
+                        prog.empty()
                 except Exception as e:
-                    send_discord_log(e, url)
-                    status.error(clean_error_message(e, url))  # Passando a URL como parâmetro
+                    send_discord_log(e, url_input)
+                    status.error(clean_error_message(e, url_input))
                     prog.empty()
 
-    if st.session_state.get('download_success'):
-        path = st.session_state['current_video_path']
+    # Exibição do resultado local (Insta/TikTok)
+    if st.session_state.get("download_success"):
+        path = st.session_state["current_video_path"]
         st.video(path)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Botão BAIXAR ARQUIVO centralizado (CORRIGIDO)
-        col_d1, col_d2, col_d3 = st.columns([1, 2, 1])
-        with col_d2:
-            with open(path, "rb") as f:
-                st.download_button(
-                    "BAIXAR ARQUIVO", 
-                    f, 
-                    f"NexusDL_{timestamp}.mp4", 
-                    "video/mp4",
-                    use_container_width=True
-                )
-    
-    st.markdown("---")
-    
-    # --- RODAPÉ TOGGLE ---
-    if 'feedback_open' not in st.session_state:
-        st.session_state.feedback_open = False
+        with open(path, "rb") as f:
+            st.download_button(
+                "BAIXAR ARQUIVO", f, f"NexusDL_{int(time.time())}.mp4", "video/mp4", use_container_width=True
+            )
 
-    def toggle_feedback():
+st.markdown("---")
+if "feedback_open" not in st.session_state:
+    st.session_state.feedback_open = False
+
+col_f1, col_f2, col_f3 = st.columns([1, 2, 1])
+with col_f2:
+    if st.button("❌ Fechar" if st.session_state.feedback_open else "🏳️ Relatar Problema", use_container_width=True):
         st.session_state.feedback_open = not st.session_state.feedback_open
+        st.rerun()
 
-    col_f1, col_f2, col_f3 = st.columns([1, 2, 1])
-    with col_f2:
-        label_btn = "❌ Fechar Suporte" if st.session_state.feedback_open else "🏳️ Relatar Problema"
-        st.button(label_btn, on_click=toggle_feedback, use_container_width=True)
+if st.session_state.feedback_open:
+    with st.form("report"):
+        email = st.text_input("E-mail (Opcional)")
+        msg = st.text_area("O que aconteceu?")
+        if st.form_submit_button("Enviar") and msg:
+            send_discord_log(f"Feedback: {msg} | Contato: {email}", "📩 FEEDBACK")
+            st.success("Enviado!")
 
-    if st.session_state.feedback_open:
-        with st.container():
-            with st.form("report_form"):
-                st.caption("Descreva o problema encontrado.")
-                email_contato = st.text_input("Seu E-mail (Opcional)", placeholder="Contato...", key="email_input")
-                descricao_erro = st.text_area("Detalhes do erro", placeholder="Ex: O vídeo baixou sem áudio...", height=100, key="descricao_input")
-                
-                # Botão ENVIAR REPORTE centralizado
-                col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
-                with col_e2:
-                    enviar_report = st.form_submit_button("Enviar Reporte", use_container_width=True)
-                
-                if enviar_report and descricao_erro:
-                    msg_final = f"**Contato:** {email_contato}\n**Relato:** {descricao_erro}"
-                    send_discord_log(msg_final, "📩 FEEDBACK MANUAL")
-                    st.success("Enviado com sucesso!")
-                elif enviar_report:
-                    st.warning("Por favor, descreva o erro.")
-
-    st.markdown("""
-    <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; margin-top: 20px;">
-        NexusDL © 2026<br>
-        Desenvolvido por Tácito
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown(
+    '<div style="text-align:center;color:gray;font-size:12px">NexusDL © 2026 | Tácito</div>', unsafe_allow_html=True
+)
